@@ -11,7 +11,6 @@ def create_parser():
     parser.add_argument('--use_gpu', default=True, type=bool)
     parser.add_argument('--gpu', default=0, type=int)
     parser.add_argument('--seed', default=111, type=int)
-    # CATH
 
     # dataset parameters
     parser.add_argument('--data_name', default='CATH', choices=['CATH', 'TS50', 'TS500', 'AlphaFold'])
@@ -35,10 +34,8 @@ def create_parser():
     parser.add_argument('--patience', default=20, type=int)
     parser.add_argument('--augment_eps', default=0.00, type=float, help='augment_eps')
     parser.add_argument('--removeTS', default=0, type=int, help='remove training and validation samples that have 30+% similarity to TS50 and TS500')
-    
 
     # feature parameters
-    # parser.add_argument('--full_atom_dis', default=10, type=int)
     parser.add_argument('--node_dist', default=1, type=int)
     parser.add_argument('--node_angle', default=1, type=int)
     parser.add_argument('--node_direct', default=1, type=int)
@@ -66,7 +63,6 @@ def create_parser():
     parser.add_argument('--N_O', default=1, type=int)
     parser.add_argument('--O_O', default=1, type=int)
 
-
     # debug parameters
     parser.add_argument('--proteinmpnn_type', default=0, type=int)
     parser.add_argument('--num_decoder_layers1', default=3, type=int)
@@ -92,7 +88,6 @@ def create_parser():
     parser.add_argument('--refine_seq', default=0, type=int)
     parser.add_argument('--refine_itr', default=3, type=int)
     parser.add_argument('--wandb', default=0, type=int)
-
     parser.add_argument('--egnn', default=0, type=int)
 
     return parser.parse_args()

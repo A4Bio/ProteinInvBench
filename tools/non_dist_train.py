@@ -1,16 +1,23 @@
+import os
 import logging
 import pickle
 import json
 import torch
 import os.path as osp
-from parser import create_parser
 
 import warnings
 warnings.filterwarnings('ignore')
 
-from constants import method_maps
-from API import Recorder
-from utils import *
+from opencpd.core import Recorder
+from opencpd.methods import method_maps
+from opencpd.utils import (create_parser, load_config, print_log, output_namespace,
+                           set_seed, check_dir, get_dataset)
+
+try:
+    import nni
+    has_nni = True
+except ImportError: 
+    has_nni = False
 
 try:
     import wandb
@@ -23,6 +30,7 @@ class Exp:
         self.args = args
         self.config = args.__dict__
         self.device = self._acquire_device()
+        self.args.method = self.args.method.lower()
         self.total_step = 0
         self._preparation()
         print_log(output_namespace(self.args))
@@ -120,7 +128,7 @@ class Exp:
 
 
 if __name__ == '__main__':
-    args = create_parser()
+    args = create_parser().parse_args()
     config = args.__dict__
 
     if args.wandb:
