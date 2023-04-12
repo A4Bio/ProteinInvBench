@@ -1,10 +1,12 @@
+import math
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
-import numpy as np
 from torch_geometric.nn import MessagePassing
 from torch_scatter import scatter_add
+
 from .gvp_module import _norm_no_nan, _split, tuple_cat, _merge, tuple_sum, tuple_index
 
 

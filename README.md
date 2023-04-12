@@ -77,11 +77,11 @@ SimVPv2 is an open-source project for video prediction methods created by resear
 If you are interested in our repository, please cite the following project:
 
 ```
-@article{2023opencpd,
-  title={OpenCPD: Open-source Toolbox for Computaional Protein Design},
-  author={Tan, Cheng and Li, Siyuan and Gao, Zhangyang and Li, Stan Z},
-  journal={arXiv preprint arXiv:2211.12509},
-  year={2022}
+@misc{2023opencpd,
+    title={OpenCPD: Open-source Toolbox for Computaional Protein Design},
+    author={Tan, Cheng and Li, Siyuan and Gao, Zhangyang and Li, Stan Z},
+    howpublished = {\url{https://github.com/A4Bio/OpenCPD}},
+    year={2023}
 }
 ```
 

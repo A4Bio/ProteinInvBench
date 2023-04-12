@@ -1,8 +1,10 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_scatter import scatter_sum, scatter_softmax, scatter_mean
-import numpy as np
+
 
 #################################### node modules ###############################
 class NeighborAttention(nn.Module):

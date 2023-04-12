@@ -6,12 +6,12 @@ channels:
 dependencies:
   - fvcore
   - matplotlib
-  - nni
   - numpy
   - pip
   - python
   - pytorch
   - pip:
+    - nni
     - scikit-learn
     - timm
     - torch-cluster

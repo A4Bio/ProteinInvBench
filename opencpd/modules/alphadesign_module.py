@@ -1,10 +1,12 @@
+import math
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_scatter import scatter_sum, scatter_softmax
-import numpy as np
-from utils import gather_nodes
-import math
+
+from opencpd.utils import gather_nodes
 
 
 def get_attend_mask(idx, mask):
