@@ -8,6 +8,7 @@ from .gvp import GVP
 from .proteinmpnn import ProteinMPNN
 from .pifold import PiFold
 from .structgnn import StructGNN
+from .kwdesign_design import KWDesign
 
 method_maps = {
     'pifold': PiFold,
@@ -18,6 +19,7 @@ method_maps = {
     'gca': GCA,
     'proteinmpnn': ProteinMPNN,
     'esmif': ESMIF,
+    'KWDesign': KWDesign
 }
 
 __all__ = [

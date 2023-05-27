@@ -4,11 +4,12 @@ import numpy as np
 from tqdm import tqdm
 
 import torch.utils.data as data
-from opencpd.datasets.utils import cached_property
-
+from .utils import cached_property
+from transformers import AutoTokenizer
 
 class CATHDataset(data.Dataset):
-    def __init__(self, path='./',  mode='train', max_length=500, test_name='All', data = None, removeTS=0):
+    def __init__(self, path='./',  mode='train', max_length=500, test_name='All', data = None, removeTS=0, version=4.2):
+        self.version = version
         self.path = path
         self.mode = mode
         self.max_length = max_length
@@ -21,6 +22,8 @@ class CATHDataset(data.Dataset):
             self.data = self.cache_data[mode]
         else:
             self.data = data
+        
+        self.tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")
     
     @cached_property
     def cache_data(self):
@@ -44,18 +47,28 @@ class CATHDataset(data.Dataset):
                 bad_chars = set([s for s in seq]).difference(alphabet_set)
 
                 if len(bad_chars) == 0:
-                    if len(entry['seq']) <= self.max_length:  
+                    if len(entry['seq']) <= self.max_length: 
+                        chain_length = len(entry['seq'])
+                        chain_mask = np.ones(chain_length)
                         data_list.append({
                             'title':entry['name'],
                             'seq':entry['seq'],
                             'CA':entry['coords']['CA'],
                             'C':entry['coords']['C'],
                             'O':entry['coords']['O'],
-                            'N':entry['coords']['N']
+                            'N':entry['coords']['N'],
+                            'chain_mask': chain_mask,
+                            'chain_encoding': 1*chain_mask
                         })
+                        
+            if self.version==4.2:
+                with open(self.path+'/chain_set_splits.json') as f:
+                    dataset_splits = json.load(f)
             
-            with open(self.path+'/chain_set_splits.json') as f:
-                dataset_splits = json.load(f)
+            if self.version==4.3:
+                with open(self.path+'/split.json') as f:
+                    dataset_splits = json.load(f)
+            
             
             if self.test_name == 'L100':
                 with open(self.path+'/test_split_L100.json') as f:
@@ -72,13 +85,15 @@ class CATHDataset(data.Dataset):
             name2set.update({name:'valid' for name in dataset_splits['validation']})
             name2set.update({name:'test' for name in dataset_splits['test']})
 
-            data_dict = {'train':[], 'valid':[], 'test':[]}
+            data_dict = {'train':[],'valid':[],'test':[]}
             for data in data_list:
                 if name2set.get(data['title']):
                     if name2set[data['title']] == 'train':
-                        data_dict['train'].append(data)           
+                        data_dict['train'].append(data)
+                    
                     if name2set[data['title']] == 'valid':
                         data_dict['valid'].append(data)
+                    
                     if name2set[data['title']] == 'test':
                         data['category'] = 'Unkown'
                         data['score'] = 100.0

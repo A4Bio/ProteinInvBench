@@ -1,25 +1,48 @@
-import math
+import torch
 import numpy as np
 import itertools
-
-import torch
+import torch.nn.functional as F
+import math
 import torch_geometric
 import torch_cluster
-import torch.nn.functional as F
-
 from collections.abc import Mapping, Sequence
 from torch_geometric.data import Data, Batch
 from torch.utils.data.dataloader import default_collate
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")
 
+def _normalize(tensor, dim=-1):
+    '''
+    Normalizes a `torch.Tensor` along dimension `dim` without `nan`s.
+    '''
+    return torch.nan_to_num(
+        torch.div(tensor, torch.norm(tensor, dim=dim, keepdim=True)))
+
+
+def _rbf(D, D_min=0., D_max=20., D_count=16, device='cpu'):
+    '''
+    From https://github.com/jingraham/neurips19-graph-protein-design
+    
+    Returns an RBF embedding of `torch.Tensor` `D` along a new axis=-1.
+    That is, if `D` has shape [...dims], then the returned tensor will have
+    shape [...dims, D_count].
+    '''
+    D_mu = torch.linspace(D_min, D_max, D_count, device=device)
+    D_mu = D_mu.view([1, -1])
+    D_sigma = (D_max - D_min) / D_count
+    D_expand = torch.unsqueeze(D, -1)
+
+    RBF = torch.exp(-((D_expand - D_mu) / D_sigma) ** 2)
+    return RBF
 
 def shuffle_subset(n, p):
-        n_shuffle = np.random.binomial(n, p)
-        ix = np.arange(n)
-        ix_subset = np.random.choice(ix, size=n_shuffle, replace=False)
-        ix_subset_shuffled = np.copy(ix_subset)
-        np.random.shuffle(ix_subset_shuffled)
-        ix[ix_subset] = ix_subset_shuffled
-        return ix
+    n_shuffle = np.random.binomial(n, p)
+    ix = np.arange(n)
+    ix_subset = np.random.choice(ix, size=n_shuffle, replace=False)
+    ix_subset_shuffled = np.copy(ix_subset)
+    np.random.shuffle(ix_subset_shuffled)
+    ix[ix_subset] = ix_subset_shuffled
+    return ix
 
 
 def featurize_AF(batch, shuffle_fraction=0.):
@@ -74,15 +97,19 @@ def featurize_AF(batch, shuffle_fraction=0.):
     return X, S, score, mask, lengths
 
 
-def featurize_GTrans(batch, shuffle_fraction=0.):
+def featurize_GTrans(batch):
     """ Pack and pad batch into torch tensors """
-    alphabet = 'ACDEFGHIKLMNPQRSTVWY'
+    # alphabet = 'ACDEFGHIKLMNPQRSTVWYX'
+    batch = [one for one in batch if one is not None]
     B = len(batch)
     lengths = np.array([len(b['seq']) for b in batch], dtype=np.int32)
     L_max = max([len(b['seq']) for b in batch])
     X = np.zeros([B, L_max, 4, 3])
     S = np.zeros([B, L_max], dtype=np.int32)
     score = np.ones([B, L_max]) * 100.0
+    chain_mask = np.zeros([B, L_max])-1 # 1:需要被预测的掩码部分 0:可见部分
+    chain_encoding = np.zeros([B, L_max])-1
+    
 
     # Build the batch
     for i, b in enumerate(batch):
@@ -93,12 +120,13 @@ def featurize_GTrans(batch, shuffle_fraction=0.):
         X[i,:,:,:] = x_pad
 
         # Convert to labels
-        indices = np.asarray([alphabet.index(a) for a in b['seq']], dtype=np.int32)
-        if shuffle_fraction > 0.:
-            idx_shuffle = shuffle_subset(l, shuffle_fraction)
-            S[i, :l] = indices[idx_shuffle]
-        else:
-            S[i, :l] = indices
+        indices = np.array(tokenizer.encode(b['seq'], add_special_tokens=False))
+        # indices = np.asarray([alphabet.index(a) for a in b['seq']], dtype=np.int32)
+
+
+        S[i, :l] = indices
+        chain_mask[i,:l] = b['chain_mask']
+        chain_encoding[i,:l] = b['chain_encoding']
 
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
     numbers = np.sum(mask, axis=1).astype(np.int)
@@ -118,32 +146,18 @@ def featurize_GTrans(batch, shuffle_fraction=0.):
     score = torch.from_numpy(score).float()
     X = torch.from_numpy(X).to(dtype=torch.float32)
     mask = torch.from_numpy(mask).to(dtype=torch.float32)
-    return X, S, score, mask, lengths
-
-
-def _normalize(tensor, dim=-1):
-    '''
-    Normalizes a `torch.Tensor` along dimension `dim` without `nan`s.
-    '''
-    return torch.nan_to_num(
-        torch.div(tensor, torch.norm(tensor, dim=dim, keepdim=True)))
-
-
-def _rbf(D, D_min=0., D_max=20., D_count=16, device='cpu'):
-    '''
-    From https://github.com/jingraham/neurips19-graph-protein-design
+    lengths = torch.from_numpy(lengths)
+    chain_mask = torch.from_numpy(chain_mask)
+    chain_encoding = torch.from_numpy(chain_encoding)
     
-    Returns an RBF embedding of `torch.Tensor` `D` along a new axis=-1.
-    That is, if `D` has shape [...dims], then the returned tensor will have
-    shape [...dims, D_count].
-    '''
-    D_mu = torch.linspace(D_min, D_max, D_count, device=device)
-    D_mu = D_mu.view([1, -1])
-    D_sigma = (D_max - D_min) / D_count
-    D_expand = torch.unsqueeze(D, -1)
-
-    RBF = torch.exp(-((D_expand - D_mu) / D_sigma) ** 2)
-    return RBF
+    return {"title": [b['title'] for b in batch],
+            "X":X,
+            "S":S,
+            "score": score,
+            "mask":mask,
+            "lengths":lengths,
+            "chain_mask":chain_mask,
+            "chain_encoding":chain_encoding}
 
 
 class featurize_GVP:
@@ -411,6 +425,7 @@ def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_positi
                 else:
                     bias_by_res_list.append(np.zeros([chain_length, 21]))
 
+       
         letter_list_np = np.array(letter_list)
         tied_pos_list_of_lists = []
         tied_beta = np.ones(L_max)
@@ -481,6 +496,7 @@ def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_positi
         visible_list_list.append(visible_list)
         masked_list_list.append(masked_list)
         masked_chain_length_list_list.append(masked_chain_length_list)
+
 
     isnan = np.isnan(X)
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32)

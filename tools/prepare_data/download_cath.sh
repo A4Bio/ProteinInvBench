@@ -4,7 +4,7 @@
 mkdir data/cath
 cd data/cath
 
-# down mmnist and place them in `data/cath/`
+# down cath and place them in `data/cath/`
 wget http://people.csail.mit.edu/ingraham/graph-protein-design/data/cath/chain_set.jsonl
 wget http://people.csail.mit.edu/ingraham/graph-protein-design/data/cath/chain_set_splits.json
 wget http://people.csail.mit.edu/ingraham/graph-protein-design/data/SPIN2/test_split_L100.json

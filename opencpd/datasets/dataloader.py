@@ -10,7 +10,7 @@ from .alphafold_dataset import AlphaFoldDataset
 from .ts_dataset import TSDataset
 from .featurizer import (featurize_AF, featurize_GTrans, featurize_GVP,
                          featurize_ProteinMPNN, featurize_Inversefolding)
-
+from .fast_dataloader import DataLoaderX
 
 class GTransDataLoader(torch.utils.data.DataLoader):
     def __init__(self, dataset, batch_size=1, shuffle=False, sampler=None, batch_sampler=None, num_workers=0,
@@ -74,9 +74,9 @@ class GVPDataLoader(torch.utils.data.DataLoader):
         self.featurizer = featurizer
 
 
-def load_data(data_name, method, batch_size, data_root, upid, limit_length, joint_data, max_nodes=3000, num_workers=8, removeTS=0, **kwargs):
+def load_data(data_name, method, batch_size, data_root, pdb_path, split_csv, max_nodes=3000, num_workers=8, removeTS=0, **kwargs):
     if data_name == 'CATH' or data_name == 'TS':
-        cath_set = CATHDataset(osp.join(data_root, 'cath'), mode='train', test_name='All', removeTS=removeTS)
+        cath_set = CATHDataset(osp.join(data_root, 'cath4.2'), mode='train', test_name='All', removeTS=removeTS)
         train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
         valid_set.change_mode('valid')
         test_set.change_mode('test')
@@ -89,26 +89,37 @@ def load_data(data_name, method, batch_size, data_root, upid, limit_length, join
         valid_set.change_mode('valid')
         test_set.change_mode('test')
         collate_fn = featurize_AF
+    elif data_name=='MPNN':
+        train_set = MPNNDataset(mode='train')
+        valid_set = MPNNDataset(mode='valid')
+        test_set = MPNNDataset(mode='test')
+        collate_fn = featurize_GTrans
 
-    if method in ['pifold','adesign', 'graphtrans', 'structgnn', 'gca', 'adesign_plus']:
-        train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-        valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-        test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-    elif method == 'gvp':
-        featurizer = featurize_GVP()
-        train_loader = GVPDataLoader(train_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
-        valid_loader = GVPDataLoader(valid_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
-        test_loader = GVPDataLoader(test_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
-    elif method == 'proteinmpnn':
-        collate_fn = featurize_ProteinMPNN
-        train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-        valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-        test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-    elif method == 'esmif':
-        collate_fn = featurize_Inversefolding
-        train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
-        valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
-        test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    # if method in ['pifold','adesign', 'graphtrans', 'structgnn', 'gca', 'adesign_plus', 'KWDesign']:
+    #     train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    #     valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    #     test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    # elif method == 'gvp':
+    #     featurizer = featurize_GVP()
+    #     train_loader = GVPDataLoader(train_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
+    #     valid_loader = GVPDataLoader(valid_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
+    #     test_loader = GVPDataLoader(test_set, num_workers=num_workers, featurizer=featurizer, max_nodes=max_nodes)
+    # elif method == 'proteinmpnn':
+    #     collate_fn = featurize_ProteinMPNN
+    #     train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    #     valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    #     test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    # elif method == 'esmif':
+    #     collate_fn = featurize_Inversefolding
+    #     train_loader = GTransDataLoader(train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn)
+    #     valid_loader = GTransDataLoader(valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+    #     test_loader = GTransDataLoader(test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn)
+        
+    train_loader = DataLoaderX(local_rank=0, dataset=train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn, prefetch_factor=8)
+    valid_loader = DataLoaderX(local_rank=0,dataset=valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn, prefetch_factor=8)
+    test_loader = DataLoaderX(local_rank=0,dataset=test_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn, prefetch_factor=8)
+        
+    
     return train_loader, valid_loader, test_loader
 
 
