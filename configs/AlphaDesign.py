@@ -12,3 +12,5 @@ use_new_feat = True
 use_NAT = True
 AT_layer_num = 3
 autoregressive = 0
+batch_size = 8
+lr = 0.001

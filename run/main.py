@@ -122,11 +122,11 @@ def main():
 
     default_params = load_config(osp.join('./configs', args.method + '.py' if args.config_file is None else args.config_file))
     config.update(default_params)
-    args.no_wandb = 1
+    # args.no_wandb = 1
 
     if not args.no_wandb:
         os.environ["WANDB_API_KEY"] = "ddb1831ecbd2bf95c3323502ae17df6e1df44ec0"
-        wandb.init(project="PiFoldV2", entity="gaozhangyang", config=config, name=args.ex_name)
+        wandb.init(project="opencpd", entity="gaozhangyang", config=config, name=args.ex_name)
         
     print(config)
     exp = Exp(args)

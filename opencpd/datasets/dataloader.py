@@ -75,7 +75,7 @@ class GVPDataLoader(torch.utils.data.DataLoader):
 
 
 def load_data(data_name, method, batch_size, data_root, pdb_path, split_csv, max_nodes=3000, num_workers=8, removeTS=0, **kwargs):
-    if data_name == 'CATH' or data_name == 'TS':
+    if data_name == 'CATH4.2' or data_name == 'TS':
         cath_set = CATHDataset(osp.join(data_root, 'cath4.2'), mode='train', test_name='All', removeTS=removeTS)
         train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
         valid_set.change_mode('valid')
@@ -105,9 +105,9 @@ def load_data(data_name, method, batch_size, data_root, pdb_path, split_csv, max
     elif method == 'ESMIF':
         collate_fn = featurize_Inversefolding
         
-    train_set.data = train_set.data[:100]
-    valid_set.data = valid_set.data[:100]
-    test_set.data = test_set.data[:100]
+    # train_set.data = train_set.data[:100]
+    # valid_set.data = valid_set.data[:100]
+    # test_set.data = test_set.data[:100]
 
     train_loader = DataLoaderX(local_rank=0, dataset=train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers, collate_fn=collate_fn, prefetch_factor=8)
     valid_loader = DataLoaderX(local_rank=0,dataset=valid_set, batch_size=batch_size, shuffle=False, num_workers=num_workers, collate_fn=collate_fn, prefetch_factor=8)

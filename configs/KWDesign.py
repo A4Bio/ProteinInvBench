@@ -26,3 +26,5 @@ edge_dist = 1
 edge_angle = 1
 edge_direct = 1
 virtual_num = 3
+batch_size = 8
+lr = 0.001

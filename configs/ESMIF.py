@@ -17,3 +17,5 @@ encoder_ffn_embed_dim = 2048
 decoder_layers = 8
 decoder_attention_heads = 8
 decoder_ffn_embed_dim = 2048
+batch_size = 4
+lr = 0.001

@@ -111,7 +111,8 @@ class GVPTransformerModel(nn.Module):
             logits = logits[0].transpose(0, 1)
             logits /= temperature
             probs = F.softmax(logits, dim=-1)
-            sampled_tokens[:, i] = torch.multinomial(probs, 1).squeeze(-1)
+            # sampled_tokens[:, i] = torch.multinomial(probs, 1).squeeze(-1)
+            sampled_tokens[:, i] = probs.argmax(dim=-1)
         sampled_seq = sampled_tokens[0, 1:]
         t3 = time.time()
 

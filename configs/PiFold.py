@@ -25,3 +25,5 @@ edge_direct = 1
 virtual_num = 3
 att_output_mlp = True
 node_output_mlp = True
+batch_size = 8
+lr = 0.001

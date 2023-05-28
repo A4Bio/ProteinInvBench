@@ -8,3 +8,5 @@ num_decoder_layers = 3
 dropout = 0.1
 is_attention = 1
 smoothing = 0.1
+batch_size = 8
+lr = 0.001
