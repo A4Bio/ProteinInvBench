@@ -503,7 +503,7 @@ class NeighborAttention(nn.Module):
 class Struct2Seq(nn.Module):
     def __init__(self, num_letters, node_features, edge_features,
         hidden_dim, num_encoder_layers=3, num_decoder_layers=3,
-        vocab=20, k_neighbors=30, protein_features='full', augment_eps=0.,
+        vocab=33, k_neighbors=30, protein_features='full', augment_eps=0.,
         dropout=0.1, forward_attention_decoder=True, use_mpnn=False):
         """ Graph labeling network """
         super(Struct2Seq, self).__init__()
@@ -513,12 +513,6 @@ class Struct2Seq(nn.Module):
         self.edge_features = edge_features
         self.hidden_dim = hidden_dim
 
-        # Featurization layers
-        self.features = ProteinFeatures(
-            node_features, edge_features, top_k=k_neighbors,
-            features_type=protein_features, augment_eps=augment_eps,
-            dropout=dropout
-        )
 
         # Embedding layers
         self.W_v = nn.Linear(node_features, hidden_dim, bias=True)

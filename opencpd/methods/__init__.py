@@ -11,14 +11,14 @@ from .structgnn import StructGNN
 from .kwdesign_design import KWDesign
 
 method_maps = {
-    'pifold': PiFold,
-    'alphadesign': AlphaDesign,
-    'graphtrans': GraphTrans,
-    'structgnn': StructGNN,
-    'gvp': GVP,
-    'gca': GCA,
-    'proteinmpnn': ProteinMPNN,
-    'esmif': ESMIF,
+    'PiFold': PiFold,
+    'AlphaDesign': AlphaDesign,
+    'GraphTrans': GraphTrans,
+    'StructGNN': StructGNN,
+    'GVP': GVP,
+    'GCA': GCA,
+    'ProteinMPNN': ProteinMPNN,
+    'ESMIF': ESMIF,
     'KWDesign': KWDesign
 }
 

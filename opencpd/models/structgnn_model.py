@@ -2,16 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from opencpd.modules.graphtrans_module import Struct2Seq, cat_neighbors_nodes, gather_nodes
+from opencpd.modules.graphtrans_module import Struct2Seq, cat_neighbors_nodes, gather_nodes, ProteinFeatures
 
 
 class StructGNN_Model(nn.Module):
     def __init__(self, args):
         super(StructGNN_Model, self).__init__()
-
+        self.args = args
         self.device = 'cuda:0'
         self.smoothing = args.smoothing
         self.model = Struct2Seq(
+            vocab=args.vocab_size,
             num_letters=args.vocab_size,
             node_features=args.hidden,
             edge_features=args.hidden, 
@@ -21,11 +22,21 @@ class StructGNN_Model(nn.Module):
             dropout=args.dropout,
             use_mpnn=True)
         
-    def forward(self, X, S, L, mask):
+        self.featurizer =  ProteinFeatures(
+            args.hidden, args.hidden, top_k=args.k_neighbors,
+            features_type=args.features,
+            dropout=args.dropout
+        )
+    
+    def _get_features(self, X, lengths, mask, chain_mask, chain_encoding):
+        V, E, E_idx = self.featurizer(X, lengths, mask)
+        return V, E, E_idx, chain_mask
+        
+        
+    def forward(self, S, V, E, E_idx, mask):
         """ Graph-conditioned sequence model """
         # Prepare node and edge embeddings
-        V, E, E_idx = self.model.features(X, L, mask) 
-
+    
         h_V = self.model.W_v(V)
         h_E = self.model.W_e(E)
 
@@ -64,10 +75,9 @@ class StructGNN_Model(nn.Module):
         log_probs = F.log_softmax(logits, dim=-1)
         return log_probs
 
-    def sample(self, X, L, mask=None, temperature=1.0):
+    def sample(self, V, E, E_idx, mask, chain_mask=None, temperature=1.0):
         """ Autoregressive decoding of a model """
          # Prepare node and edge embeddings
-        V, E, E_idx = self.model.features(X, L, mask)
         h_V = self.model.W_v(V)
         h_E = self.model.W_e(E)
 
@@ -83,7 +93,7 @@ class StructGNN_Model(nn.Module):
         mask_1D = mask.view([mask.size(0), mask.size(1), 1, 1])
         mask_bw = mask_1D * mask_attend
         mask_fw = mask_1D * (1. - mask_attend)
-        N_batch, N_nodes = X.size(0), X.size(1)
+        N_batch, N_nodes = V.size(0), V.size(1)
         h_S = torch.zeros_like(h_V)
         S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device = self.device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V) for _ in range(len(self.model.decoder_layers))]

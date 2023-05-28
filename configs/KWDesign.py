@@ -25,3 +25,4 @@ node_direct = 1
 edge_dist = 1
 edge_angle = 1
 edge_direct = 1
+virtual_num = 3

@@ -6,6 +6,7 @@ import torch
 from .base_method import Base_method
 from .utils import cuda
 from opencpd.models import ESMIF_Model
+from opencpd.datasets.featurizer import featurize_Inversefolding
 
 
 class ESMIF(Base_method):
@@ -13,10 +14,25 @@ class ESMIF(Base_method):
         Base_method.__init__(self, args, device, steps_per_epoch)
         self.model = self._build_model()
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer, self.scheduler, self.by_epoch = self._init_optimizer(steps_per_epoch)
+        self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
 
     def _build_model(self):
         return ESMIF_Model(self.args).to(self.device)
+    
+    def forward_loss(self, batch):
+        X, S, score, mask, lengths, chain_mask = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask']
+        mask = mask==1
+        S_prev = torch.clone(S).long()
+        R = torch.rand(S_prev.shape[0])
+        for i in range(R.shape[0]):
+            S_prev[i, (R[i]*mask[i].sum()).long():] = 32
+        
+        log_probs, _ = self.model(X, mask, score, S_prev) 
+        loss = self.criterion(log_probs, S)
+        return {"loss":loss, 
+                "S":S, 
+                "log_probs":log_probs, 
+                "chain_mask": chain_mask}
 
     def train_one_epoch(self, train_loader):
         self.model.train()
@@ -25,11 +41,8 @@ class ESMIF(Base_method):
         train_pbar = tqdm(train_loader)
         for batch in train_pbar:
             self.optimizer.zero_grad()
-            X, S, score, mask, lengths = cuda(batch, device = self.device)
-            mask = mask==1
-            S_prev = torch.zeros_like(S).long()
-            log_probs, _ = self.model(X, mask, score, S_prev) # TODO: autoregressive training
-            loss = self.criterion(log_probs, S)
+            result = self.forward_loss(batch)
+            loss, S, log_probs = result['loss'], result['S'], result['log_probs']
             loss.backward()
             
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
@@ -53,13 +66,9 @@ class ESMIF(Base_method):
 
         with torch.no_grad():
             for batch in valid_pbar:
-                X, S, score, mask, lengths = cuda(batch, device = self.device)
-                mask = mask==1
-                S_prev = torch.zeros_like(S).long()
-                log_probs, _ = self.model(X, mask, score, S_prev)
-                loss, loss_av = self.loss_nll_flatten(S, log_probs)
+                result = self.forward_loss(batch)
+                loss, S, log_probs = result['loss'], result['S'], result['log_probs']
                 mask = torch.ones_like(loss)
-
                 valid_sum += torch.sum(loss * mask).cpu().data.numpy()
                 valid_weights += torch.sum(mask).cpu().data.numpy()
 
@@ -76,22 +85,19 @@ class ESMIF(Base_method):
 
         with torch.no_grad():
             for batch in test_pbar:
-                X, S, score, mask, lengths = cuda(batch, device = self.device)
-                mask = mask==1
-                S_prev = torch.zeros_like(S).long()
-                log_probs, _ = self.model(X, mask, score, S_prev)
-                loss, loss_av = self.loss_nll_flatten(S, log_probs)
+                result = self.forward_loss(batch)
+                loss, S, log_probs = result['loss'], result['S'], result['log_probs']
                 mask = torch.ones_like(loss)
                 test_sum += torch.sum(loss * mask).cpu().data.numpy()
                 test_weights += torch.sum(mask).cpu().data.numpy()
                 test_pbar.set_description('test loss: {:.4f}'.format(loss.mean().item()))
             
-            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, test_loader.featurizer)
+            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, featurize_Inversefolding)
             
         test_loss = test_sum / test_weights
         test_perplexity = np.exp(test_loss)
     
-        return test_perplexity, test_recovery, test_subcat_recovery
+        return test_perplexity, test_recovery
 
     def _cal_recovery(self, dataset, featurizer):
         recovery = []
@@ -102,9 +108,11 @@ class ESMIF(Base_method):
                 if p_category not in subcat_recovery.keys():
                     subcat_recovery[p_category] = []
 
-                protein = featurizer([protein])
-                X, S, score, mask, lengths = cuda(protein, device = self.device)
+                batch = featurizer([protein])
+                X, S, score, mask, lengths, chain_mask = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask']
+                X, S, score, mask, lengths, chain_mask = cuda([X, S, score, mask, lengths, chain_mask])
                 mask = mask==1
+
                 S_pred = self.model.sample(X, mask, confidence=score, temperature=0.1)
                 cmp = (S_pred.view(1,-1) == S)
                 cmp = cmp[score >= self.args.score_thr]

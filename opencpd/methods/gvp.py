@@ -5,14 +5,14 @@ import torch.nn as nn
 
 from opencpd.models import GVP_Model
 from .base_method import Base_method
-
+from opencpd.datasets.featurizer import featurize_GVP
 
 class GVP(Base_method):
     def __init__(self, args, device, steps_per_epoch):
         Base_method.__init__(self, args, device, steps_per_epoch)
         self.model = self._build_model()
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer, self.scheduler, self.by_epoch = self._init_optimizer(steps_per_epoch)
+        self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
 
         self.letter_to_num = {'C': 4, 'D': 3, 'S': 15, 'Q': 5, 'K': 11, 'I': 9,
                        'P': 14, 'T': 16, 'F': 13, 'A': 0, 'G': 7, 'H': 8,
@@ -23,6 +23,15 @@ class GVP(Base_method):
     def _build_model(self):
         return GVP_Model(self.args).to(self.device)
 
+    def forward_loss(self, batch):
+        h_V = (batch.node_s, batch.node_v)
+        h_E = (batch.edge_s, batch.edge_v)
+        logits = self.model(h_V, batch.edge_index, h_E, seq=batch.seq)
+        logits, seq = logits[batch.mask], batch.seq[batch.mask]
+        loss = self.criterion(logits, seq)
+        return {"loss":loss,
+                "mask": batch.mask}
+    
     def _cal_recovery(self, dataset, featurizer):
         recovery = []
         subcat_recovery = {}
@@ -37,11 +46,6 @@ class GVP(Base_method):
             sample = self.model.test_recovery(protein)
             cmp = sample.eq(protein.seq)
 
-            # # TODO: this may ignore score in AF2 DB, lead to higher recovery
-            # if 'score' in protein.keys():
-            #     score = torch.tensor(protein['score']).cuda()
-            # else:
-            #     score = torch.ones_like(cmp).cuda()*1000
             # cmp = cmp.view(-1)[score >= self.args.score_thr]
             recovery_ = cmp.float().mean().cpu().numpy()
 
@@ -49,6 +53,7 @@ class GVP(Base_method):
 
             subcat_recovery[p_category].append(recovery_)
             recovery.append(recovery_)
+            
 
         for key in subcat_recovery.keys():
             subcat_recovery[key] = np.median(subcat_recovery[key])
@@ -71,18 +76,14 @@ class GVP(Base_method):
         for batch in train_pbar:
             self.optimizer.zero_grad()
             batch = batch.to(self.device)
-            h_V = (batch.node_s, batch.node_v)
-            h_E = (batch.edge_s, batch.edge_v)
-            logits = self.model(h_V, batch.edge_index, h_E, seq=batch.seq)
-            logits, seq = logits[batch.mask], batch.seq[batch.mask]
-            loss = self.criterion(logits, seq)
+            result = self.forward_loss(batch)
+            loss, mask = result['loss'], batch['mask']
             loss.backward()
         
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
             self.optimizer.step()
             self.scheduler.step()
 
-            mask = batch.mask
             train_sum += torch.sum(loss * mask).cpu().data.numpy()
             train_weights += torch.sum(mask).cpu().data.numpy()
             train_pbar.set_description('train loss: {:.4f}'.format(loss.mean().item()))
@@ -98,12 +99,8 @@ class GVP(Base_method):
             valid_pbar = tqdm(valid_loader)
             for batch in valid_pbar:
                 batch = batch.to(self.device)
-                h_V = (batch.node_s, batch.node_v)
-                h_E = (batch.edge_s, batch.edge_v)
-                logits = self.model(h_V, batch.edge_index, h_E, seq=batch.seq)
-                logits, seq = logits[batch.mask], batch.seq[batch.mask]
-                loss = self.criterion(logits, seq)
-                mask = batch.mask
+                result = self.forward_loss(batch)
+                loss, mask = result['loss'], batch['mask']
 
                 valid_sum += torch.sum(loss * mask).cpu().data.numpy()
                 valid_weights += torch.sum(mask).cpu().data.numpy()
@@ -121,20 +118,16 @@ class GVP(Base_method):
             test_pbar = tqdm(test_loader)
             for batch in test_pbar:
                 batch = batch.to(self.device)
-                h_V = (batch.node_s, batch.node_v)
-                h_E = (batch.edge_s, batch.edge_v)
-                logits = self.model(h_V, batch.edge_index, h_E, seq=batch.seq)
-                logits, seq = logits[batch.mask], batch.seq[batch.mask]
-                loss = self.criterion(logits, seq)
-                mask = batch.mask
+                result = self.forward_loss(batch)
+                loss, mask = result['loss'], batch['mask']
                 
                 test_sum += torch.sum(loss * mask).cpu().data.numpy()
                 test_weights += torch.sum(mask).cpu().data.numpy()
 
                 test_pbar.set_description('test loss: {:.4f}'.format(loss.mean().item()))
 
-            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, test_loader.featurizer)
+            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, featurize_GVP())
             
         test_loss = test_sum / test_weights
         test_perplexity = np.exp(test_loss)
-        return test_perplexity, test_recovery, test_subcat_recovery
+        return test_perplexity, test_recovery

@@ -1,7 +1,7 @@
 method = 'GraphTrans'
 hidden = 128
 k_neighbors = 30
-vocab_size = 20
+vocab_size = 33
 features = 'full'
 model_type = 'structure'
 shuffle = 0.

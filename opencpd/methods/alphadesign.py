@@ -6,17 +6,35 @@ import torch
 from .base_method import Base_method
 from .utils import cuda
 from opencpd.models import AlphaDesign_Model
-
+from opencpd.datasets.featurizer import featurize_GTrans
 
 class AlphaDesign(Base_method):
     def __init__(self, args, device, steps_per_epoch):
         Base_method.__init__(self, args, device, steps_per_epoch)
         self.model = self._build_model()
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer, self.scheduler, self.by_epoch = self._init_optimizer(steps_per_epoch)
+        self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
 
     def _build_model(self):
         return AlphaDesign_Model(self.args).to(self.device)
+    
+    def forward_loss(self, batch):
+        X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+        X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding = self.model._get_features(S, score, X=X, mask=mask)
+        if self.args.autoregressive:
+            log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=False)
+            loss = self.criterion(log_probs, S)
+        else:
+            log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+            loss1 = self.criterion(log_probs, S)
+            loss2 = self.criterion(log_probs0, S)
+            loss = loss1 + loss2
+        
+        return {"loss":loss, 
+                "S":S, 
+                "log_probs":log_probs, 
+                "chain_mask": chain_mask,
+                "score": score}
 
     def train_one_epoch(self, train_loader):
         self.model.train()
@@ -25,16 +43,8 @@ class AlphaDesign(Base_method):
         train_pbar = tqdm(train_loader)
         for batch in train_pbar:
             self.optimizer.zero_grad()
-            X, S, score, mask, lengths = cuda(batch, device = self.device)
-            X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
-            if self.args.autoregressive:
-                log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=False)
-                loss = self.criterion(log_probs, S)
-            else:
-                log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
-                loss1 = self.criterion(log_probs, S)
-                loss2 = self.criterion(log_probs0, S)
-                loss = loss1 + loss2
+            result = self.forward_loss(batch)
+            loss, S, log_probs = result['loss'], result['S'], result['log_probs']
             loss.backward()
             
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
@@ -58,12 +68,8 @@ class AlphaDesign(Base_method):
 
         with torch.no_grad():
             for batch in valid_pbar:
-                X, S, score, mask, lengths = cuda(batch, device = self.device)
-                X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
-                if self.args.autoregressive:
-                    log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=True)
-                else:
-                    log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+                result = self.forward_loss(batch)
+                loss, S, log_probs = result['loss'], result['S'], result['log_probs']
                 loss, loss_av = self.loss_nll_flatten(S, log_probs)
                 mask = torch.ones_like(loss)
 
@@ -83,24 +89,20 @@ class AlphaDesign(Base_method):
 
         with torch.no_grad():
             for batch in test_pbar:
-                X, S, score, mask, lengths = cuda(batch, device = self.device)
-                X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
-                if self.args.autoregressive:
-                    log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=True)
-                else:
-                    log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+                result = self.forward_loss(batch)
+                loss, S, log_probs = result['loss'], result['S'], result['log_probs']
                 loss, loss_av = self.loss_nll_flatten(S, log_probs)
                 mask = torch.ones_like(loss)
                 test_sum += torch.sum(loss * mask).cpu().data.numpy()
                 test_weights += torch.sum(mask).cpu().data.numpy()
                 test_pbar.set_description('test loss: {:.4f}'.format(loss.mean().item()))
             
-            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, test_loader.featurizer)
+            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, featurize_GTrans)
             
         test_loss = test_sum / test_weights
         test_perplexity = np.exp(test_loss)
     
-        return test_perplexity, test_recovery, test_subcat_recovery
+        return test_perplexity, test_recovery
 
     def _cal_recovery(self, dataset, featurizer):
         recovery = []
@@ -111,13 +113,11 @@ class AlphaDesign(Base_method):
                 if p_category not in subcat_recovery.keys():
                     subcat_recovery[p_category] = []
 
-                protein = featurizer([protein])
-                X, S, score, mask, lengths = cuda(protein, device = self.device)
-                X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
-                if self.args.autoregressive:
-                    log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=True)
-                else:
-                    log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+                batch = featurizer([protein])
+                X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+                X, S, score, mask, lengths = cuda([X, S, score, mask, lengths])
+                X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding = self.model._get_features(S, score, X=X, mask=mask)
+                log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
                 S_pred = torch.argmax(log_probs, dim=1)
                 cmp = (S_pred == S)
                 cmp = cmp[score >= self.args.score_thr]

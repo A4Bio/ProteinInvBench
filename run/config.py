@@ -17,7 +17,7 @@ def create_parser():
     # dataset parameters
     parser.add_argument('--data_name', default='CATH', choices=['MPNN', 'PDB', 'CATH', 'TS50', 'CATH4.3'])
     parser.add_argument('--data_root', default='/gaozhangyang/experiments/OpenCPD/data/')
-    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--batch_size', default=4, type=int)
     parser.add_argument('--num_workers', default=4, type=int)
     parser.add_argument('--score_thr', default=70.0, type=float)
     parser.add_argument('--pdb_path', default='/gaozhangyang/drug_dataset/full_pdb/pdb_protein_chains/')
@@ -25,7 +25,7 @@ def create_parser():
     
 
     # method parameters
-    parser.add_argument('--method', default='KWDesign', choices=['PiFold', 'PiFoldV2', 'KWDesign'])
+    parser.add_argument('--method', default='ESMIF', choices=['AlphaDesign', 'PiFold', 'KWDesign', 'GraphTrans', 'StructGNN', 'GVP', 'GCA', 'ProteinMPNN', 'ESMIF'])
     parser.add_argument('--config_file', '-c', default=None, type=str)
     parser.add_argument('--fix_gnn', default=1, type=int)
     parser.add_argument('--fix_esm', default=1, type=int)

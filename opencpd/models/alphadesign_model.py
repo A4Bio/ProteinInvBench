@@ -122,4 +122,4 @@ class AlphaDesign_Model(nn.Module):
         X = X[sparse_idx[:,0],sparse_idx[:,1],:,:]
         batch_id = sparse_idx[:,0]
 
-        return X, S, score, _V, _E, E_idx, batch_id
+        return X, S, score, _V, _E, E_idx, batch_id, None, None

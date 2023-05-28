@@ -1,7 +1,7 @@
 method = 'GCA'
 hidden = 128
 k_neighbors = 30
-vocab_size = 20
+vocab_size = 33
 features = 'full'
 num_encoder_layers = 3
 num_decoder_layers = 3

@@ -86,7 +86,11 @@ class Exp:
                 if not self.args.no_wandb:
                     wandb.log({"valid_perplexity": valid_perplexity})
 
-                recorder(-torch.cat(self.method.model.Design1.confidence).mean(), {key:val for key,val in self.method.model.state_dict().items() if "GNNTuning" in key}, self.path)
+                if self.args.method=='KWDesign':
+                    recorder(valid_loss, {key:val for key,val in self.method.model.state_dict().items() if "GNNTuning" in key}, self.path)
+                else:
+                    recorder(valid_loss, self.method.model.parameters, self.path)
+                    
                 if recorder.early_stop:
                     print("Early stopping")
                     logging.info("Early stopping")
@@ -120,8 +124,6 @@ def main():
     config.update(default_params)
     args.no_wandb = 1
 
-
-    
     if not args.no_wandb:
         os.environ["WANDB_API_KEY"] = "ddb1831ecbd2bf95c3323502ae17df6e1df44ec0"
         wandb.init(project="PiFoldV2", entity="gaozhangyang", config=config, name=args.ex_name)

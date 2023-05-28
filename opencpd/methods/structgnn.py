@@ -5,13 +5,15 @@ from tqdm import tqdm
 from .base_method import Base_method
 from .utils import cuda, loss_nll, loss_smoothed
 from opencpd.models import StructGNN_Model
-
+import torch.nn as nn
+from opencpd.datasets.featurizer import featurize_GTrans
 
 class StructGNN(Base_method):
     def __init__(self, args, device, steps_per_epoch):
         Base_method.__init__(self, args, device, steps_per_epoch)
         self.model = self._build_model()
-        self.optimizer, self.scheduler, self.by_epoch = self._init_optimizer(steps_per_epoch)
+        self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
+        self.criterion = nn.CrossEntropyLoss(reduction='none')
 
     def _build_model(self):
         return StructGNN_Model(self.args).to(self.device)
@@ -24,9 +26,21 @@ class StructGNN(Base_method):
             if p_category not in subcat_recovery.keys():
                 subcat_recovery[p_category] = []
 
-            protein = featurizer([protein])
-            X, S, score, mask, lengths = cuda(protein, device = self.device)
-            sample = self.model.sample(X=X, L=lengths, mask=mask, temperature=0.1)
+            batch = featurizer([protein])
+            if self.args.method == 'GCA':
+                X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
+                X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                
+                h_V, h_P, h_F, P_idx, F_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
+                
+                sample = self.model.sample(h_V, h_P, h_F, P_idx, F_idx, mask, temperature=0.1)
+            else:
+                X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
+                X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                
+                V, E, E_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
+                
+                sample = self.model.sample(V, E, E_idx, mask, temperature=0.1)
             cmp = sample.eq(S)
             cmp = cmp[score >= self.args.score_thr]
             recovery_ = cmp.float().mean().cpu().numpy()
@@ -46,6 +60,25 @@ class StructGNN(Base_method):
         self.median_recovery = np.median(recovery)
         recovery = self.median_recovery
         return recovery, subcat_recovery
+    
+    def forward_loss(self, batch):
+        X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+        if self.args.method=='GCA':
+            h_V, h_P, h_F, P_idx, F_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=batch['chain_mask'], chain_encoding = batch['chain_encoding'])
+            
+            log_probs = self.model(h_V, h_P, h_F, P_idx, F_idx, S, mask)
+        else:
+            V, E, E_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=batch['chain_mask'], chain_encoding = batch['chain_encoding'])
+            log_probs = self.model(S, V, E, E_idx, mask)
+        B, L = S.shape
+        loss = self.criterion(log_probs.reshape(B*L, -1), S.reshape(B*L)).reshape(B,L)
+        loss = (loss*mask).sum()/(mask.sum())
+        return {"S":S, 
+                "log_probs":log_probs,
+                "mask": mask,
+                "loss": loss}
+        
+        
 
     def train_one_epoch(self, train_loader):
         """ train one epoch to obtain average loss """
@@ -56,17 +89,13 @@ class StructGNN(Base_method):
         train_pbar = tqdm(train_loader)
         for batch in train_pbar:
             self.optimizer.zero_grad()
-            X, S, _, mask, lengths = batch
-            X, S, mask, lengths = cuda((X, S, mask, lengths), device=self.device)
-            log_probs = self.model(X, S, lengths, mask)
-            _, loss_av_smoothed = loss_smoothed(S, log_probs, mask, weight=self.args.smoothing)
-            loss_av_smoothed.backward()
+            result = self.forward_loss(batch)
+            S, log_probs, mask, loss = result['S'], result['log_probs'], result['mask'], result['loss']
         
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
             self.optimizer.step()
             self.scheduler.step()
 
-            loss, _ = loss_nll(S, log_probs, mask)
             train_sum += torch.sum(loss * mask).cpu().data.numpy()
             train_weights += torch.sum(mask).cpu().data.numpy()
             train_pbar.set_description('train loss: {:.4f}'.format(loss.mean().item()))
@@ -81,9 +110,8 @@ class StructGNN(Base_method):
             valid_sum, valid_weights = 0., 0.
             valid_pbar = tqdm(valid_loader)
             for batch in valid_pbar:
-                X, S, _, mask, lengths = batch
-                X, S, mask, lengths = cuda((X, S, mask, lengths), device=self.device)
-                log_probs = self.model(X, S, lengths, mask)
+                result = self.forward_loss(batch)
+                S, log_probs, mask = result['S'], result['log_probs'], result['mask']
                 loss, _ = loss_nll(S, log_probs, mask)
 
                 valid_sum += torch.sum(loss * mask).cpu().data.numpy()
@@ -101,9 +129,8 @@ class StructGNN(Base_method):
             test_sum, test_weights = 0., 0.
             test_pbar = tqdm(test_loader)
             for batch in test_pbar:
-                X, S, _, mask, lengths = batch
-                X, S, mask, lengths = cuda((X, S, mask, lengths), device=self.device)
-                log_probs = self.model(X, S, lengths, mask)
+                result = self.forward_loss(batch)
+                S, log_probs, mask = result['S'], result['log_probs'], result['mask']
                 loss, _ = loss_nll(S, log_probs, mask)
                 
                 test_sum += torch.sum(loss * mask).cpu().data.numpy()
@@ -111,8 +138,8 @@ class StructGNN(Base_method):
 
                 test_pbar.set_description('test loss: {:.4f}'.format(loss.mean().item()))
 
-            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, test_loader.featurizer)
+            test_recovery, test_subcat_recovery = self._cal_recovery(test_loader.dataset, featurize_GTrans)
             
         test_loss = test_sum / test_weights
         test_perplexity = np.exp(test_loss)
-        return test_perplexity, test_recovery, test_subcat_recovery
+        return test_perplexity, test_recovery

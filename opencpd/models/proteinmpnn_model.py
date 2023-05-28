@@ -145,8 +145,8 @@ class ProteinMPNN_Model(nn.Module):
         h_S = torch.zeros_like(h_V, device=device)
         S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device=device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V, device=device) for _ in range(len(self.decoder_layers))]
-        constant = torch.tensor(omit_AAs_np, device=device)
-        constant_bias = torch.tensor(bias_AAs_np, device=device)
+        # constant = torch.tensor(omit_AAs_np, device=device)
+        # constant_bias = torch.tensor(bias_AAs_np, device=device)
         #chain_mask_combined = chain_mask*chain_M_pos 
         omit_AA_mask_flag = omit_AA_mask != None
 
@@ -158,7 +158,7 @@ class ProteinMPNN_Model(nn.Module):
             t = decoding_order[:,t_] #[B]
             chain_mask_gathered = torch.gather(chain_mask, 1, t[:,None]) #[B]
             mask_gathered = torch.gather(mask, 1, t[:,None]) #[B]
-            bias_by_res_gathered = torch.gather(bias_by_res, 1, t[:,None,None].repeat(1,1,21))[:,0,:] #[B, 21]
+            # bias_by_res_gathered = torch.gather(bias_by_res, 1, t[:,None,None].repeat(1,1,21))[:,0,:] #[B, 21]
             if (mask_gathered==0).all(): #for padded or missing regions only
                 S_t = torch.gather(S_true, 1, t[:,None])
             else:
@@ -177,7 +177,10 @@ class ProteinMPNN_Model(nn.Module):
                 # Sampling step
                 h_V_t = torch.gather(h_V_stack[-1], 1, t[:,None,None].repeat(1,1,h_V_stack[-1].shape[-1]))[:,0]
                 logits = self.W_out(h_V_t) / temperature
-                probs = F.softmax(logits-constant[None,:]*1e8+constant_bias[None,:]/temperature+bias_by_res_gathered/temperature, dim=-1)
+                # probs = F.softmax(logits-constant[None,:]*1e8+constant_bias[None,:]/temperature+bias_by_res_gathered/temperature, dim=-1)
+                
+                probs = F.softmax(logits, dim=-1)
+                
                 if pssm_bias_flag:
                     pssm_coef_gathered = torch.gather(pssm_coef, 1, t[:,None])[:,0]
                     pssm_bias_gathered = torch.gather(pssm_bias, 1, t[:,None,None].repeat(1,1,pssm_bias.shape[-1]))[:,0]

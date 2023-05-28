@@ -1820,8 +1820,8 @@ class GVPTransformerEncoder(nn.Module):
         coord_mask = torch.all(torch.all(torch.isfinite(coords), dim=-1), dim=-1)
         coords = nan_to_num(coords)
         mask_tokens = (
-            padding_mask * self.dictionary.padding_idx + 
-            ~padding_mask * self.dictionary.get_idx("<mask>")
+            padding_mask * self.dictionary.pad_token_id + 
+            ~padding_mask * self.dictionary.mask_token_id
         )
         components["tokens"] = self.embed_tokens(mask_tokens) * self.embed_scale
         components["diherals"] = self.embed_dihedrals(coords)

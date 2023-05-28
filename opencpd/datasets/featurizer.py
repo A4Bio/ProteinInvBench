@@ -9,7 +9,7 @@ from collections.abc import Mapping, Sequence
 from torch_geometric.data import Data, Batch
 from torch.utils.data.dataloader import default_collate
 from transformers import AutoTokenizer
-tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")
+tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers") # mask token: 32
 
 def _normalize(tensor, dim=-1):
     '''
@@ -490,7 +490,7 @@ def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_positi
         bias_by_res_all[i,:] = bias_by_res_pad
 
         # Convert to labels
-        indices = np.asarray([alphabet.index(a) for a in all_sequence], dtype=np.int32)
+        indices = np.array(tokenizer.encode(b['seq'], add_special_tokens=False))
         S[i, :l] = indices
         letter_list_list.append(letter_list)
         visible_list_list.append(visible_list)
@@ -527,9 +527,30 @@ def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_positi
     chain_encoding_all = torch.from_numpy(chain_encoding_all).to(dtype=torch.long)
 
     if is_testing is False:
-        return X, S, score, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all
+        return {"title": [b['title'] for b in batch],
+                "X":X,
+                "S":S,
+                "score": score,
+                "mask":mask,
+                "lengths":lengths,
+                "chain_M":chain_M,
+                "chain_M_pos":chain_M_pos,
+                "residue_idx":residue_idx,
+                "chain_encoding_all":chain_encoding_all}
     else:
-        return X, S, score, mask, lengths, chain_M, chain_encoding_all, letter_list_list, visible_list_list, masked_list_list, masked_chain_length_list_list, chain_M_pos, omit_AA_mask, residue_idx, dihedral_mask, tied_pos_list_of_lists_list, pssm_coef_all, pssm_bias_all, pssm_log_odds_all, bias_by_res_all, tied_beta
+        return {"title": [b['title'] for b in batch],
+                "X":X,
+                "S":S,
+                "score": score,
+                "mask":mask,
+                "lengths":lengths,
+                "chain_M":chain_M,
+                "chain_M_pos":chain_M_pos,
+                "residue_idx":residue_idx,
+                "chain_encoding_all":chain_encoding_all}
+        
+        
+
 
 
 def featurize_Inversefolding(batch, shuffle_fraction=0.):
@@ -541,6 +562,8 @@ def featurize_Inversefolding(batch, shuffle_fraction=0.):
     X = np.zeros([B, L_max, 3, 3])
     S = np.zeros([B, L_max], dtype=np.int32)
     score = np.ones([B, L_max]) * 100.0
+    chain_mask = np.zeros([B, L_max])-1 # 1:需要被预测的掩码部分 0:可见部分
+    chain_encoding = np.zeros([B, L_max])-1
 
     # Build the batch
     for i, b in enumerate(batch):
@@ -551,12 +574,15 @@ def featurize_Inversefolding(batch, shuffle_fraction=0.):
         X[i,:,:,:] = x_pad
 
         # Convert to labels
-        indices = np.asarray([alphabet.index(a) for a in b['seq']], dtype=np.int32)
+        indices = np.array(tokenizer.encode(b['seq'], add_special_tokens=False))
         if shuffle_fraction > 0.:
             idx_shuffle = shuffle_subset(l, shuffle_fraction)
             S[i, :l] = indices[idx_shuffle]
         else:
             S[i, :l] = indices
+        
+        chain_mask[i,:l] = b['chain_mask']
+        chain_encoding[i,:l] = b['chain_encoding']
 
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
     numbers = np.sum(mask, axis=1).astype(np.int)
@@ -576,4 +602,13 @@ def featurize_Inversefolding(batch, shuffle_fraction=0.):
     score = torch.from_numpy(score).float()
     X = torch.from_numpy(X).to(dtype=torch.float32)
     mask = torch.from_numpy(mask).to(dtype=torch.float32)
-    return X, S, score, mask, lengths
+    chain_mask = torch.from_numpy(chain_mask)
+    chain_encoding = torch.from_numpy(chain_encoding)
+    return {"title": [b['title'] for b in batch],
+            "X":X,
+            "S":S,
+            "score": score,
+            "mask":mask,
+            "lengths":lengths,
+            "chain_mask":chain_mask,
+            "chain_encoding":chain_encoding}

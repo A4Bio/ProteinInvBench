@@ -1,8 +1,11 @@
+import time
 import torch
+import math
 import torch.nn as nn
-
-from opencpd.utils import gather_nodes, _dihedrals, _get_rbf, _orientations_coarse_gl_tuple
-from opencpd.modules.pifold_module import MLPDecoder, StructureEncoder
+from opencpd.utils import gather_nodes, _dihedrals, _get_rbf, _get_dist, _rbf, _orientations_coarse_gl_tuple
+import numpy as np
+from opencpd.modules.pifold_module import *
+from transformers import AutoTokenizer
 
 
 pair_lst = ['N-N', 'C-C', 'O-O', 'Cb-Cb', 'Ca-N', 'Ca-C', 'Ca-O', 'Ca-Cb', 'N-C', 'N-O', 'N-Cb', 'Cb-C', 'Cb-O', 'O-C', 'N-Ca', 'C-Ca', 'O-Ca', 'Cb-Ca', 'C-N', 'O-N', 'Cb-N', 'C-Cb', 'O-Cb', 'C-O']
@@ -24,13 +27,25 @@ class PiFold_Model(nn.Module):
         self.num_positional_embeddings = 16
 
         self.dihedral_type = args.dihedral_type
+        self.tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")
+        alphabet = [one for one in 'ACDEFGHIKLMNPQRSTVWYX']
+        self.token_mask = torch.tensor([(one in alphabet) for one in self.tokenizer._token_to_id.keys()])
+        
+        # self.full_atom_dis = args.full_atom_dis
+        
+        # node_in = 12
+
+        # node_in = node_in + 9 + 576 # node_in + 9 + 576
         prior_matrix = [
             [-0.58273431, 0.56802827, -0.54067466],
             [0.0       ,  0.83867057, -0.54463904],
             [0.01984028, -0.78380804, -0.54183614],
         ]
 
+        # prior_matrix = torch.rand(self.args.virtual_num,3)
         self.virtual_atoms = nn.Parameter(torch.tensor(prior_matrix)[:self.args.virtual_num,:])
+        # num_va = self.virtual_atoms.shape[0]
+        # edge_in = (15 + 9 * num_va + (num_va - 1) * num_va) * 16 + 16 + 7 
 
         node_in = 0
         if self.args.node_dist:
@@ -76,6 +91,12 @@ class PiFold_Model(nn.Module):
             edge_in += 4
         if self.args.edge_direct:
             edge_in += 12
+        
+        if self.args.use_gvp_feat:
+            node_in = 12
+            edge_in = 48-16
+        
+        edge_in += 16 # position encoding
 
         self.node_embedding = nn.Linear(node_in, node_features, bias=True)
         self.edge_embedding = nn.Linear(edge_in, edge_features, bias=True)
@@ -95,17 +116,35 @@ class PiFold_Model(nn.Module):
         self.W_e = nn.Linear(edge_features, hidden_dim, bias=True) 
         self.W_f = nn.Linear(edge_features, hidden_dim, bias=True)
 
-        self.encoder = StructureEncoder(hidden_dim, num_encoder_layers, dropout, args.node_context, args.edge_context)
+        self.encoder = StructureEncoder(hidden_dim, num_encoder_layers, dropout, args.updating_edges, args.att_output_mlp, args.node_output_mlp, args.node_net, args.edge_net, args.node_context, args.edge_context)
 
-        self.decoder = MLPDecoder(hidden_dim)
+        # self.decoder = CNNDecoder(hidden_dim, hidden_dim, args.num_decoder_layers1, args.kernel_size1, args.act_type, args.glu)
+        # self.decoder2 = CNNDecoder2(hidden_dim, hidden_dim, args.num_decoder_layers2, args.kernel_size2, args.act_type, args.glu)
 
-        self.aa_embedding = nn.Embedding(20, hidden_dim)
-        
+        self.decoder = MLPDecoder(hidden_dim, hidden_dim, args.num_decoder_layers1, args.kernel_size1, args.act_type, args.glu, vocab=len(self.tokenizer._token_to_id))
         self._init_params()
+
+        self.encode_t = 0
+        self.decode_t = 0
     
-    def forward(self, h_V, h_P, P_idx, batch_id):
+    def forward(self, h_V, h_P, P_idx, batch_id, S=None, AT_test = False, mask_bw = None, mask_fw = None, decoding_order= None):
+        t1 = time.time()
+        h_V = self.W_v(self.norm_nodes(self.node_embedding(h_V)))
+        h_P = self.W_e(self.norm_edges(self.edge_embedding(h_P)))
+        
         h_V, h_P = self.encoder(h_V, h_P, P_idx, batch_id)
-        log_probs, logits = self.decoder(h_V)     
+        t2 = time.time()
+
+        
+        
+        log_probs, logits = self.decoder(h_V, batch_id, self.token_mask)
+                
+        # log_probs, logits = self.decoder2(h_V, logits, batch_id)
+        t3 = time.time()
+
+        self.encode_t += t2-t1
+        self.decode_t += t3-t2
+        # return log_probs, log_probs0
         return log_probs
         
     def _init_params(self):
@@ -125,7 +164,7 @@ class PiFold_Model(nn.Module):
         D_neighbors, E_idx = torch.topk(D_adjust, min(top_k, D_adjust.shape[-1]), dim=-1, largest=False)
         return D_neighbors, E_idx  
 
-    def _get_features(self, S, score, X, mask):
+    def _get_features(self, S, score, X, mask, chain_mask, chain_encoding):
         if self.augment_eps>0:
             X = X + self.augment_eps * torch.randn_like(X)
         
@@ -140,24 +179,14 @@ class PiFold_Model(nn.Module):
         edge_mask_select = lambda x:  torch.masked_select(x, mask_attend.unsqueeze(-1)).reshape(-1,x.shape[-1])
         node_mask_select = lambda x: torch.masked_select(x, mask_bool.unsqueeze(-1)).reshape(-1, x.shape[-1])
 
-        randn = torch.rand(mask.shape, device=X.device)+5
-        decoding_order = torch.argsort(-mask*(torch.abs(randn))) #我们的mask=1代表数据可用, 而protein MPP的mask=1代表数据不可用，正好相反
-        mask_size = mask.shape[1]
-        permutation_matrix_reverse = torch.nn.functional.one_hot(decoding_order, num_classes=mask_size).float()
-        # 计算q已知的情况下, q->p的mask, 
-        order_mask_backward = torch.einsum('ij, biq, bjp->bqp',(1-torch.triu(torch.ones(mask_size,mask_size, device=device))), permutation_matrix_reverse, permutation_matrix_reverse)
-        mask_attend2 = torch.gather(order_mask_backward, 2, E_idx)
-        mask_1D = mask.view([mask.size(0), mask.size(1), 1])
-        mask_bw = (mask_1D * mask_attend2).unsqueeze(-1)
-        mask_fw = (mask_1D * (1-mask_attend2)).unsqueeze(-1)
-        mask_bw = edge_mask_select(mask_bw).squeeze()
-        mask_fw = edge_mask_select(mask_fw).squeeze()
-        
+
 
         # sequence
         S = torch.masked_select(S, mask_bool)
         if score is not None:
             score = torch.masked_select(score, mask_bool)
+        chain_mask = torch.masked_select(chain_mask, mask_bool)
+        chain_encoding = torch.masked_select(chain_encoding, mask_bool)
 
         # angle & direction
         V_angles = _dihedrals(X, self.dihedral_type) 
@@ -197,6 +226,8 @@ class PiFold_Model(nn.Module):
                     node_dist.append(node_mask_select(_get_rbf(vars()['atom_v' + str(i)], vars()['atom_v' + str(j)], None, self.num_rbf).squeeze()))
                     node_dist.append(node_mask_select(_get_rbf(vars()['atom_v' + str(j)], vars()['atom_v' + str(i)], None, self.num_rbf).squeeze()))
         V_dist = torch.cat(tuple(node_dist), dim=-1).squeeze()
+        
+        
 
         pair_lst = []
         if self.args.Ca_Ca:
@@ -236,6 +267,7 @@ class PiFold_Model(nn.Module):
         if self.args.virtual_num>0:
             for i in range(self.virtual_atoms.shape[0]):
                 edge_dist.append(edge_mask_select(_get_rbf(vars()['atom_v' + str(i)], vars()['atom_v' + str(i)], E_idx, self.num_rbf)))
+
                 for j in range(0, i):
                     edge_dist.append(edge_mask_select(_get_rbf(vars()['atom_v' + str(i)], vars()['atom_v' + str(j)], E_idx, self.num_rbf)))
                     edge_dist.append(edge_mask_select(_get_rbf(vars()['atom_v' + str(j)], vars()['atom_v' + str(i)], E_idx, self.num_rbf)))
@@ -269,15 +301,31 @@ class PiFold_Model(nn.Module):
         dst = shift.view(B,1,1) + torch.arange(0, N, device=src.device).view(1,-1,1).expand_as(mask_attend)
         dst = torch.masked_select(dst, mask_attend).view(1,-1)
         E_idx = torch.cat((dst, src), dim=0).long()
-
-        decoding_order = node_mask_select((decoding_order+shift.view(-1,1)).unsqueeze(-1)).squeeze().long()
         
+        pos_embed = self._positional_embeddings(E_idx, 16)
+        _E = torch.cat([_E, pos_embed], dim=-1)
+
         # 3D point
         sparse_idx = mask.nonzero()  # index of non-zero values
         X = X[sparse_idx[:,0], sparse_idx[:,1], :, :]
         batch_id = sparse_idx[:,0]
 
-        _V = self.W_v(self.norm_nodes(self.node_embedding(_V)))
-        _E = self.W_e(self.norm_edges(self.edge_embedding(_E)))
+        return X, S, score, _V, _E, E_idx, batch_id, chain_mask, chain_encoding
 
-        return X, S, score, _V, _E, E_idx, batch_id, mask_bw, mask_fw, decoding_order
+        
+    def _positional_embeddings(self, E_idx, 
+                               num_embeddings=None):
+        # From https://github.com/jingraham/neurips19-graph-protein-design
+        num_embeddings = num_embeddings or self.num_positional_embeddings
+        d = E_idx[0]-E_idx[1]
+     
+        frequency = torch.exp(
+            torch.arange(0, num_embeddings, 2, dtype=torch.float32, device=E_idx.device)
+            * -(np.log(10000.0) / num_embeddings)
+        )
+        angles = d[:,None] * frequency[None,:]
+        E = torch.cat((torch.cos(angles), torch.sin(angles)), -1)
+        return E
+    
+    
+    

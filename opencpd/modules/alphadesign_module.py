@@ -155,7 +155,7 @@ def positionalencoding1d(d_model, length):
     return pe
 
 class CNNDecoder(nn.Module):
-    def __init__(self,hidden_dim, input_dim, vocab=20):
+    def __init__(self,hidden_dim, input_dim, vocab=33):
         super().__init__()
         self.CNN = nn.Sequential(nn.Conv1d(input_dim, hidden_dim,5, padding=2),
                                    nn.BatchNorm1d(hidden_dim),
@@ -175,7 +175,7 @@ class CNNDecoder(nn.Module):
         return log_probs, logits
 
 class CNNDecoder2(nn.Module):
-    def __init__(self,hidden_dim, input_dim, vocab=20):
+    def __init__(self,hidden_dim, input_dim, vocab=33):
         super().__init__()
         self.ConfNN = nn.Embedding(50, hidden_dim)
         
@@ -255,7 +255,7 @@ class Local_Module(nn.Module):
         return h_V
 
 class MLPDecoder(nn.Module):
-    def __init__(self, hidden_dim, input_dim, num_layers=3, kernel_size=5, act_type='relu', glu=0, vocab=20):
+    def __init__(self, hidden_dim, input_dim, num_layers=3, kernel_size=5, act_type='relu', glu=0, vocab=33):
         super().__init__()
         self.readout = nn.Linear(hidden_dim, vocab)
     
@@ -265,7 +265,7 @@ class MLPDecoder(nn.Module):
         return log_probs, logits
 
 class ATDecoder(nn.Module):
-    def __init__(self, args, hidden_dim, dropout=0.1, vocab=20):
+    def __init__(self, args, hidden_dim, dropout=0.1, vocab=33):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.vocab = vocab

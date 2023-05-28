@@ -120,7 +120,7 @@ class GCA_Model(nn.Module):
         h_PSV_encoder = cat_neighbors_nodes(h_V, h_PS_encoder, P_idx)
         return h_PS, h_PSV_encoder
 
-    def _get_features(self, X, mask):
+    def _get_features(self, X, lengths, mask, chain_mask, chain_encoding):
         X_ca = X[:,:,1,:]
         D_neighbors, F_idx = self._full_dist(X_ca, mask, 500)
         P_idx = F_idx[:, :, :self.top_k].clone()
@@ -133,7 +133,7 @@ class GCA_Model(nn.Module):
     
         h_V = self.W_v(_V)
         h_P, h_F = self.W_e(_P), self.W_f(_F)
-        return h_V, h_P, h_F, P_idx, F_idx
+        return h_V, h_P, h_F, P_idx, F_idx, chain_mask
     
     def sparse_to_dense(self, S, h_V, h_P, edge_idx_P, h_F, edge_idx_F, batch_id):
         device = h_V.device
@@ -201,8 +201,7 @@ class GCA_Model(nn.Module):
         
         return S, h_V, h_P, h_F, P_idx,F_idx, mask
     
-    def forward(self, X, S, L, mask, **kwargs):
-        h_V, h_P, h_F, P_idx, F_idx = self._get_features(X=X, mask=mask)
+    def forward(self, h_V, h_P, h_F, P_idx, F_idx, S, mask, **kwargs):
         
         t1 = time.time()
         h_V = self._encoder_network(h_V, h_P, h_F, P_idx, F_idx, mask)
@@ -224,18 +223,16 @@ class GCA_Model(nn.Module):
         self.decode_t += t3-t2
         return log_probs
 
-    def sample(self, X, mask=None, temperature=0.1, **kwargs):
-        h_V, h_P, h_F, P_idx, F_idx = self._get_features(X=X, mask=mask)
-
+    def sample(self, h_V, h_P, h_F, P_idx, F_idx, mask=None, temperature=0.1, **kwargs):
         t1 = time.time()
         h_V = self._encoder_network(h_V, h_P, h_F, P_idx, F_idx, mask)
         t2 = time.time()
 
         # Decoder
         P_idx_mask_bw, P_idx_mask_fw = self._get_decoder_mask(P_idx, mask)
-        N_batch, N_nodes = X.size(0), X.size(1)
+        N_batch, N_nodes = h_V.size(0), h_V.size(1)
         h_S = torch.zeros_like(h_V)
-        S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device=X.device)
+        S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device=h_V.device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V) for _ in range(len(self.decoder_layers))]
         for t in range(N_nodes):
             # Hidden layers

@@ -9,7 +9,7 @@ from torch import nn
 import torch.nn.functional as F
 
 from opencpd.modules.esmif_module import GVPTransformerEncoder, TransformerDecoder, CoordBatchConverter, Alphabet
-
+from transformers import AutoTokenizer
 
 class GVPTransformerModel(nn.Module):
     """
@@ -21,7 +21,8 @@ class GVPTransformerModel(nn.Module):
 
     def __init__(self, args):
         super().__init__()
-        alphabet = Alphabet.from_architecture()
+        # alphabet = Alphabet.from_architecture()
+        alphabet = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers") 
         encoder_embed_tokens = self.build_embedding(
             args, alphabet, args.encoder_embed_dim,
         )
@@ -51,7 +52,7 @@ class GVPTransformerModel(nn.Module):
     @classmethod
     def build_embedding(cls, args, dictionary, embed_dim):
         num_embeddings = len(dictionary)
-        padding_idx = dictionary.padding_idx
+        padding_idx = dictionary.pad_token_id
         emb = nn.Embedding(num_embeddings, embed_dim, padding_idx)
         nn.init.normal_(emb.weight, mean=0, std=embed_dim ** -0.5)
         nn.init.constant_(emb.weight[padding_idx], 0)
@@ -74,7 +75,6 @@ class GVPTransformerModel(nn.Module):
             features_only=features_only,
             return_all_hiddens=return_all_hiddens,
         )
-        logits = logits[:,:20,:]
         return logits, extra
 
     def sample(self, batch_coords, padding_mask, partial_seq=None, temperature=1.0, confidence=None):
@@ -115,7 +115,5 @@ class GVPTransformerModel(nn.Module):
         sampled_seq = sampled_tokens[0, 1:]
         t3 = time.time()
 
-        self.encode_t += t2-t1
-        self.decode_t += t3-t2
         # Convert back to string via lookup
         return sampled_seq

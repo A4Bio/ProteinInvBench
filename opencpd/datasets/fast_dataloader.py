@@ -24,7 +24,7 @@ class DataLoaderX(DataLoader):
         if self.batch is None:
             return None
 
-        with torch.cuda.stream(self.stream):
+        with torch.cuda.stream(self.stream): # 将数据预先放进gpu
             for key, val in self.batch.items():
                 if type(val) == torch.Tensor:
                     self.batch[key] = val.to(
