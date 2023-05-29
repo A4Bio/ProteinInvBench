@@ -65,7 +65,10 @@ class Exp:
 
     
     def _save(self, name=''):
-        torch.save({key:val for key,val in self.method.model.state_dict().items() if "GNNTuning" in key}, osp.join(self.checkpoints_path, name + '.pth'))
+        if self.args.method=='KWDesign':
+            torch.save({key:val for key,val in self.method.model.state_dict().items() if "GNNTuning" in key}, osp.join(self.checkpoints_path, name + '.pth'))
+        else:
+            torch.save(self.method.model.state_dict(), osp.join(self.checkpoints_path, name + '.pth'))
 
     def _load(self, epoch):
         self.method.model.load_state_dict(torch.load(osp.join(self.checkpoints_path, str(epoch) + '.pth')), strict=False)
@@ -79,7 +82,7 @@ class Exp:
                 with torch.no_grad():
                     valid_loss, valid_perplexity = self.valid()
                     self._save(name=str(epoch))
-                    self.test()
+                    # self.test()
                 
                 print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
                 
@@ -89,7 +92,7 @@ class Exp:
                 if self.args.method=='KWDesign':
                     recorder(valid_loss, {key:val for key,val in self.method.model.state_dict().items() if "GNNTuning" in key}, self.path)
                 else:
-                    recorder(valid_loss, self.method.model.parameters, self.path)
+                    recorder(valid_loss, self.method.model.state_dict(), self.path)
                     
                 if recorder.early_stop:
                     print("Early stopping")
@@ -130,6 +133,9 @@ def main():
         
     print(config)
     exp = Exp(args)
+    
+    # best_model_path = osp.join(exp.path, 'checkpoints/19.pth')
+    # exp.method.model.load_state_dict(torch.load(best_model_path))
 
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     exp.train()

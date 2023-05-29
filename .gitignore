@@ -130,3 +130,4 @@ pretrains
 .DS_Store
 *.json
 run/wandb/
+wandb/

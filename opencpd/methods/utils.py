@@ -19,7 +19,7 @@ def cuda(obj, *args, **kwargs):
     raise TypeError("Can't transfer object type `%s`" % type(obj))
 
 
-def loss_smoothed(S, log_probs, mask, num_classes=20, weight=0.1):
+def loss_smoothed(S, log_probs, mask, num_classes=33, weight=0.1):
     """ Negative log probabilities """
     S_onehot = torch.nn.functional.one_hot(S, num_classes=num_classes).float() # [4, 463] --> [4, 463, 20]
 

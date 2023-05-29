@@ -25,7 +25,8 @@ class ESMIF(Base_method):
         S_prev = torch.clone(S).long()
         R = torch.rand(S_prev.shape[0])
         for i in range(R.shape[0]):
-            S_prev[i, (R[i]*mask[i].sum()).long():] = 32
+            # S_prev[i, (R[i]*mask[i].sum()).long():] = 32
+            S_prev[i, :] = 32
         
         log_probs, _ = self.model(X, mask, score, S_prev) 
         loss = self.criterion(log_probs, S)
@@ -122,6 +123,7 @@ class ESMIF(Base_method):
 
                 subcat_recovery[p_category].append(recovery_)
                 recovery.append(recovery_)
+
             
             for key in subcat_recovery.keys():
                 subcat_recovery[key] = np.median(subcat_recovery[key])

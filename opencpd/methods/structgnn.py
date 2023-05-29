@@ -73,6 +73,7 @@ class StructGNN(Base_method):
         B, L = S.shape
         loss = self.criterion(log_probs.reshape(B*L, -1), S.reshape(B*L)).reshape(B,L)
         loss = (loss*mask).sum()/(mask.sum())
+        # _, loss = loss_smoothed(S, log_probs, mask, weight=self.args.smoothing, num_classes=33)
         return {"S":S, 
                 "log_probs":log_probs,
                 "mask": mask,
@@ -91,7 +92,7 @@ class StructGNN(Base_method):
             self.optimizer.zero_grad()
             result = self.forward_loss(batch)
             S, log_probs, mask, loss = result['S'], result['log_probs'], result['mask'], result['loss']
-        
+            loss.backward()
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 1)
             self.optimizer.step()
             self.scheduler.step()
