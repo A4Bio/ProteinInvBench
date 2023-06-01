@@ -8,6 +8,7 @@ import torch.utils.data as data
 from .cath_dataset import CATHDataset
 from .alphafold_dataset import AlphaFoldDataset
 from .ts_dataset import TSDataset
+from .mpnn_dataset import MPNNDataset
 from .featurizer import (featurize_AF, featurize_GTrans, featurize_GVP,
                          featurize_ProteinMPNN, featurize_Inversefolding)
 from .fast_dataloader import DataLoaderX
@@ -82,6 +83,12 @@ def load_data(data_name, method, batch_size, data_root, pdb_path, split_csv, max
         test_set.change_mode('test')
         if data_name == 'TS':
             test_set = TSDataset(osp.join(data_root, 'ts'))
+        collate_fn = featurize_GTrans
+    elif data_name == 'CATH4.3':
+        cath_set = CATHDataset(osp.join(data_root, 'cath4.3'), mode='train', test_name='All', removeTS=removeTS, version=4.3)
+        train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
+        valid_set.change_mode('valid')
+        test_set.change_mode('test')
         collate_fn = featurize_GTrans
     elif data_name == 'AlphaFold':
         af_set = AlphaFoldDataset(osp.join(data_root, 'af2db'), upid=upid, mode='train', limit_length=limit_length, joint_data=joint_data)

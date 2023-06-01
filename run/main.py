@@ -53,8 +53,10 @@ class Exp:
                             filemode='a', format='%(asctime)s - %(message)s')
         # prepare data
         self._get_data()
+        
         # build the method
-        self._build_method()
+        if self.args.method!="KWDesign":
+            self._build_method()
 
     def _build_method(self):
         steps_per_epoch = len(self.train_loader)
@@ -73,6 +75,19 @@ class Exp:
     def _load(self, epoch):
         self.method.model.load_state_dict(torch.load(osp.join(self.checkpoints_path, str(epoch) + '.pth')), strict=False)
     
+    def train_KWDesign(self):
+        self.args.patience = 3
+        self.args.epoch = 5
+        recycle_n = self.args.recycle_n
+        for cycle in range(1, recycle_n+1):
+            self.args.recycle_n = cycle
+            current_pth = osp.join(self.args.res_dir, self.args.ex_name, "checkpoints", f"msa{self.args.msa_n}_recycle{self.args.recycle_n}_epoch{self.args.load_epoch}.pth")
+            if os.path.exists(current_pth):
+                continue
+            else:
+                self._build_method()
+                self.train()
+    
     def train(self):
         recorder = Recorder(self.args.patience, verbose=True)
         for epoch in range(self.args.epoch):
@@ -81,7 +96,12 @@ class Exp:
             if epoch % self.args.log_step == 0:
                 with torch.no_grad():
                     valid_loss, valid_perplexity = self.valid()
-                    self._save(name=str(epoch))
+                    if self.args.method=='KWDesign':
+                        self._save(name=f"msa{self.args.msa_n}_recycle{self.args.recycle_n}_epoch{epoch}")
+                        if not os.path.exists(self.args.memory_path):
+                            torch.save({"memo_pifold":self.method.model.memo_pifold.memory, "memo_esmif":self.method.model.memo_esmif.memory} , self.args.memory_path)
+                    else:
+                        self._save(name=str(epoch))
                     # self.test()
                 
                 print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
@@ -138,7 +158,10 @@ def main():
     # exp.method.model.load_state_dict(torch.load(best_model_path))
 
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
-    exp.train()
+    if args.method == 'KWDesign':
+       exp.train_KWDesign() 
+    else:
+        exp.train()
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> testing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     test_perp, test_rec = exp.test()
     if not args.no_wandb:

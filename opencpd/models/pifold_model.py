@@ -96,7 +96,7 @@ class PiFold_Model(nn.Module):
             node_in = 12
             edge_in = 48-16
         
-        edge_in += 16 # position encoding
+        edge_in += 16+16 # position encoding, chain encoding
 
         self.node_embedding = nn.Linear(node_in, node_features, bias=True)
         self.edge_embedding = nn.Linear(edge_in, edge_features, bias=True)
@@ -122,6 +122,7 @@ class PiFold_Model(nn.Module):
         # self.decoder2 = CNNDecoder2(hidden_dim, hidden_dim, args.num_decoder_layers2, args.kernel_size2, args.act_type, args.glu)
 
         self.decoder = MLPDecoder(hidden_dim, hidden_dim, args.num_decoder_layers1, args.kernel_size1, args.act_type, args.glu, vocab=len(self.tokenizer._token_to_id))
+        self.chain_embed = nn.Embedding(2,16)
         self._init_params()
 
         self.encode_t = 0
@@ -304,6 +305,10 @@ class PiFold_Model(nn.Module):
         
         pos_embed = self._positional_embeddings(E_idx, 16)
         _E = torch.cat([_E, pos_embed], dim=-1)
+        
+        d_chains = ((chain_encoding[dst.long()] - chain_encoding[src.long()])==0).long().reshape(-1)   
+        chain_embed = self.chain_embed(d_chains)
+        _E = torch.cat([_E, chain_embed], dim=-1)
 
         # 3D point
         sparse_idx = mask.nonzero()  # index of non-zero values

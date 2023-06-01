@@ -165,17 +165,19 @@ class featurize_GVP:
         self.top_k = top_k
         self.num_rbf = num_rbf
         self.num_positional_embeddings = num_positional_embeddings
-        self.letter_to_num = {'C': 4, 'D': 3, 'S': 15, 'Q': 5, 'K': 11, 'I': 9,
-                       'P': 14, 'T': 16, 'F': 13, 'A': 0, 'G': 7, 'H': 8,
-                       'E': 6, 'L': 10, 'R': 1, 'W': 17, 'V': 19, 
-                       'N': 2, 'Y': 18, 'M': 12}
-        self.num_to_letter = {v:k for k, v in self.letter_to_num.items()}
+        # self.letter_to_num = {'C': 4, 'D': 3, 'S': 15, 'Q': 5, 'K': 11, 'I': 9,
+        #                'P': 14, 'T': 16, 'F': 13, 'A': 0, 'G': 7, 'H': 8,
+        #                'E': 6, 'L': 10, 'R': 1, 'W': 17, 'V': 19, 
+        #                'N': 2, 'Y': 18, 'M': 12}
+        # self.num_to_letter = {v:k for k, v in self.letter_to_num.items()}
     
     def featurize(self, batch):
         data_all = []
         for b in batch:
+            if b is None:
+                continue
             coords = torch.tensor(np.stack([b[c] for c in ['N', 'CA', 'C', 'O']], 1))
-            seq = torch.tensor([self.letter_to_num[a] for a in b['seq']])
+            seq = torch.tensor(np.array(tokenizer.encode(b['seq'], add_special_tokens=False)))
         
             mask = torch.isfinite(coords.sum(dim=(1,2)))
             coords[~mask] = np.inf

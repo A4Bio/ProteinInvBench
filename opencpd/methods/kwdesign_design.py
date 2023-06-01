@@ -8,6 +8,8 @@ from .utils import cuda
 from opencpd.models import KWDesign_model
 from opencpd.datasets.featurizer import featurize_GTrans
 import os.path as osp
+from opencpd.utils.main_utils import check_dir
+import os
 
 class KWDesign(Base_method):
     def __init__(self, args, device, steps_per_epoch):
@@ -16,12 +18,16 @@ class KWDesign(Base_method):
         self.args = args
         self.criterion = nn.CrossEntropyLoss(reduction='none')
         if self.args.load_memory:
-            memories = torch.load(self.args.memory_path)
-            self.model.memo_pifold.memory = memories['memo_pifold']
-            self.model.memo_esmif.memory = memories['memo_esmif']
+            sv_root = osp.join(self.args.res_dir, self.args.data_name)
+            check_dir(sv_root)
+            self.args.memory_path = osp.join(sv_root, 'memory.pth')
+            if os.path.exists(self.args.memory_path):
+                memories = torch.load(self.args.memory_path)
+                self.model.memo_pifold.memory = memories['memo_pifold']
+                self.model.memo_esmif.memory = memories['memo_esmif']
         
         if self.args.recycle_n>1:
-            params = torch.load(f"/gaozhangyang/experiments/PiFoldV2/results/memotuning_msa{self.args.msa_n}_recycle{self.args.recycle_n-1}_nips3/checkpoints/{self.args.load_epoch}.pth")
+            params = torch.load(osp.join(self.args.res_dir, self.args.ex_name, "checkpoints", f"msa{self.args.msa_n}_recycle{self.args.recycle_n-1}_epoch{self.args.load_epoch}.pth"))
             self.model.load_state_dict(params, strict=False)
             for i in range(self.args.recycle_n-1):
                 submodule = self.model.get_submodule(f"Design{i+1}")

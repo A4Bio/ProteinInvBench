@@ -7,6 +7,7 @@ from opencpd.modules.pifold_module import StructureEncoder, MLPDecoder
 from transformers import AutoTokenizer
 import numpy as np
 import torch.nn.functional as F
+import os.path as osp
 
 pair_lst = ['N-N', 'C-C', 'O-O', 'Cb-Cb', 'Ca-N', 'Ca-C', 'Ca-O', 'Ca-Cb', 'N-C', 'N-O', 'N-Cb', 'Cb-C', 'Cb-O', 'O-C', 'N-Ca', 'C-Ca', 'O-Ca', 'Cb-Ca', 'C-N', 'O-N', 'Cb-N', 'C-Cb', 'O-Cb', 'C-O']
 
@@ -129,7 +130,8 @@ class PretrainPiFold_Model(nn.Module):
 
         # self.load_state_dict(torch.load("/gaozhangyang/experiments/PiFoldV2/results/cath4.2_pretrained/checkpoint.pth"))
         # self.load_state_dict(torch.load("/gaozhangyang/experiments/PiFoldV2/results/PiFold_esm_token/checkpoint.pth"))
-        self.load_state_dict(torch.load("/gaozhangyang/experiments/PiFoldV2/results/retrain_PiFold/checkpoint.pth"))
+        pretrain_pifold_path = osp.join(self.args.res_dir, self.data_name, "PiFold", "checkpoint.pth")
+        self.load_state_dict(torch.load(pretrain_pifold_path))
     
     @torch.no_grad()
     def forward(self, batch):

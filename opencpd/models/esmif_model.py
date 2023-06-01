@@ -69,12 +69,14 @@ class GVPTransformerModel(nn.Module):
     ):
         encoder_out = self.encoder(coords, padding_mask, confidence,
             return_all_hiddens=return_all_hiddens)
+            
         logits, extra = self.decoder(
             prev_output_tokens,
             encoder_out=encoder_out,
             features_only=features_only,
             return_all_hiddens=return_all_hiddens,
         )
+
         return logits, extra
 
     def sample(self, batch_coords, padding_mask, partial_seq=None, temperature=1.0, confidence=None):

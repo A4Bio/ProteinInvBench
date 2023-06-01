@@ -49,6 +49,8 @@ class AlphaDesign_Model(nn.Module):
         else:
             self.decoder = CNNDecoder(hidden_dim, hidden_dim)
             self.decoder2 = CNNDecoder2(hidden_dim, hidden_dim)
+            
+        # self.chain_embed = nn.Embedding(2,16)
         self._init_params()
     
     def forward(self, h_V, h_P, P_idx, batch_id,  S=None, AT_test = False, return_logit=False):
@@ -117,9 +119,10 @@ class AlphaDesign_Model(nn.Module):
         dst = torch.masked_select(dst, mask_attend).view(1,-1)
         E_idx = torch.cat((dst, src), dim=0).long()
         
+        
         # 3D point
         sparse_idx = mask.nonzero()
         X = X[sparse_idx[:,0],sparse_idx[:,1],:,:]
         batch_id = sparse_idx[:,0]
 
-        return X, S, score, _V, _E, E_idx, batch_id, None, None
+        return X, S, score, _V, _E, E_idx, batch_id

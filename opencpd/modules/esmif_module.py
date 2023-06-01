@@ -2091,6 +2091,7 @@ class TransformerDecoder(nn.Module):
             else:
                 self_attn_mask = None
 
+            
             x, layer_attn, _ = layer(
                 x,
                 enc,

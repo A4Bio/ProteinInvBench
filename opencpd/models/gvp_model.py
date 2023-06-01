@@ -56,7 +56,7 @@ class GVP_Model(nn.Module):
                 GVPConvLayer(self.node_h_dim, self.edge_h_dim, drop_rate=drop_rate) 
             for _ in range(self.num_layers))
         
-        self.W_s = nn.Embedding(20, 20)
+        self.W_s = nn.Embedding(33, 20)
         self.edge_h_dim = (self.edge_h_dim[0] + 20, self.edge_h_dim[1])
       
         self.decoder_layers = nn.ModuleList(
@@ -64,7 +64,7 @@ class GVP_Model(nn.Module):
                              drop_rate=drop_rate, autoregressive=True) 
             for _ in range(self.num_layers))
         
-        self.W_out = GVP(self.node_h_dim, (20, 0), activations=(None, None))
+        self.W_out = GVP(self.node_h_dim, (33, 0), activations=(None, None))
 
         self.encode_t = 0
         self.decode_t = 0

@@ -20,20 +20,17 @@ class AlphaDesign(Base_method):
     
     def forward_loss(self, batch):
         X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
-        X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding = self.model._get_features(S, score, X=X, mask=mask)
-        if self.args.autoregressive:
-            log_probs, _ = self.model(h_V, h_E, E_idx, batch_id, S, AT_test=False)
-            loss = self.criterion(log_probs, S)
-        else:
-            log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
-            loss1 = self.criterion(log_probs, S)
-            loss2 = self.criterion(log_probs0, S)
-            loss = loss1 + loss2
+        X, S, score, h_V, h_E, E_idx, batch_id, = self.model._get_features(S, score, X=X, mask=mask)
+
+        log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+        loss1 = self.criterion(log_probs, S)
+        loss2 = self.criterion(log_probs0, S)
+        loss = loss1 + loss2
         
         return {"loss":loss, 
                 "S":S, 
                 "log_probs":log_probs, 
-                "chain_mask": chain_mask,
+                "chain_mask": batch['chain_mask'],
                 "score": score}
 
     def train_one_epoch(self, train_loader):
@@ -115,8 +112,8 @@ class AlphaDesign(Base_method):
 
                 batch = featurizer([protein])
                 X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
-                X, S, score, mask, lengths = cuda([X, S, score, mask, lengths])
-                X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding = self.model._get_features(S, score, X=X, mask=mask)
+                X, S, score, mask, lengths, chain_encoding = cuda([X, S, score, mask, lengths, chain_encoding])
+                X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
                 log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
                 S_pred = torch.argmax(log_probs, dim=1)
                 cmp = (S_pred == S)

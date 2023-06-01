@@ -13,7 +13,7 @@ class ESMIF(Base_method):
     def __init__(self, args, device, steps_per_epoch):
         Base_method.__init__(self, args, device, steps_per_epoch)
         self.model = self._build_model()
-        self.criterion = nn.CrossEntropyLoss()
+        self.criterion = nn.CrossEntropyLoss(reduction='none')
         self.optimizer, self.scheduler = self._init_optimizer(steps_per_epoch)
 
     def _build_model(self):
@@ -22,14 +22,19 @@ class ESMIF(Base_method):
     def forward_loss(self, batch):
         X, S, score, mask, lengths, chain_mask = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask']
         mask = mask==1
-        S_prev = torch.clone(S).long()
-        R = torch.rand(S_prev.shape[0])
-        for i in range(R.shape[0]):
-            # S_prev[i, (R[i]*mask[i].sum()).long():] = 32
-            S_prev[i, :] = 32
+        # S_prev = 
+        # R = torch.rand(S_prev.shape[0])
+        # for i in range(R.shape[0]):
+        #     mask_pos = (R[i]*mask[i].sum()).long()
+        #     S_prev[i, mask_pos:] = 32
+            # S_prev[i, :] = 32
+            
+        B, L = S.shape
+        S_prev = torch.cat([torch.zeros(B,1, device=S.device).long(), S[:,:-1]], dim=-1)
+        log_probs, _ = self.model(X, mask, score, S_prev)
         
-        log_probs, _ = self.model(X, mask, score, S_prev) 
-        loss = self.criterion(log_probs, S)
+        loss = self.criterion(log_probs.permute(0,2,1).reshape(-1,33), S.reshape(-1)).reshape(B, L)
+        loss = (loss*mask).sum()/(mask.sum())
         return {"loss":loss, 
                 "S":S, 
                 "log_probs":log_probs, 

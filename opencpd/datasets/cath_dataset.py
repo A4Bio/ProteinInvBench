@@ -66,7 +66,7 @@ class CATHDataset(data.Dataset):
                     dataset_splits = json.load(f)
             
             if self.version==4.3:
-                with open(self.path+'/split.json') as f:
+                with open(self.path+'/chain_set_splits.json') as f:
                     dataset_splits = json.load(f)
             
             
