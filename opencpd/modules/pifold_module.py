@@ -480,9 +480,9 @@ class Context(nn.Module):
             # h_V = self.V_MLP(h_V) * self.V_MLP_g(c_V[batch_id])
             # h_V = h_V + self.V_MLP(h_V) * self.V_MLP_g(c_V[batch_id])
         
-        if self.edge_context:
-            c_V = scatter_mean(h_V, batch_id, dim=0)
-            h_E = h_E * self.E_MLP_g(c_V[batch_id[edge_idx[0]]])
+        # if self.edge_context:
+        #     c_V = scatter_mean(h_V, batch_id, dim=0)
+        #     h_E = h_E * self.E_MLP_g(c_V[batch_id[edge_idx[0]]])
 
         return h_V, h_E
 

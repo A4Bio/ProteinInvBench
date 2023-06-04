@@ -14,3 +14,5 @@ AT_layer_num = 3
 autoregressive = 0
 batch_size = 8
 lr = 0.001
+patience = 100
+epoch=100

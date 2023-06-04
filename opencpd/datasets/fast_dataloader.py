@@ -20,8 +20,15 @@ class DataLoaderX(DataLoader):
 
 
     def preload(self):
-        self.batch = next(self.iter, None)
-        if self.batch is None:
+        while True:
+            #获取下一个值
+            self.batch = next(self.iter, None)
+            if self.batch is not None:
+                break
+            if self.iter._send_idx==len(self.iter):
+                break
+        
+        if (self.batch is None):
             return None
 
         with torch.cuda.stream(self.stream): # 将数据预先放进gpu

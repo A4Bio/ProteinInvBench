@@ -30,6 +30,8 @@ class ProteinMPNN(StructGNN):
         recovery = []
         subcat_recovery = {}
         for protein in tqdm(dataset):
+            if protein is None:
+                continue
             p_category = protein['category'] if 'category' in protein.keys() else 'Unknown'
             if p_category not in subcat_recovery.keys():
                 subcat_recovery[p_category] = []
@@ -65,6 +67,35 @@ class ProteinMPNN(StructGNN):
         self.median_recovery = np.median(recovery)
         recovery = np.median(recovery)
         return recovery, subcat_recovery
+    
+    def _save_probs(self, dataset, featurizer):
+        from transformers import AutoTokenizer
+        sv_results = {"title": [],
+                      "true_seq":[],
+                      "pred_probs":[],
+                      "tokenizer": AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")}
+        for protein in tqdm(dataset):
+            if protein is None:
+                continue
+            name = protein['title']
+            batch = featurizer([protein], is_testing=True)
+            
+            X, S, score, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_M'], batch['chain_M_pos'], batch['residue_idx'], batch['chain_encoding_all']
+        
+            X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = cuda((X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all), device=self.device)
+            
+
+            randn_2 = torch.randn(chain_M.shape, device=X.device)
+            sample_dict = self.model.sample(X, randn_2, torch.zeros_like(S), chain_M, chain_encoding_all, residue_idx, mask=mask, chain_M_pos=chain_M_pos, temperature=1.0)
+
+            all_probs = sample_dict['probs'][0]
+
+            sv_results['title'].append(name)
+            sv_results['true_seq'].append(S.cpu()[0])
+            sv_results['pred_probs'].append(all_probs.cpu())
+
+
+        return sv_results
 
     def forward_loss(self, batch):
         X, S, score, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_M'], batch['chain_M_pos'], batch['residue_idx'], batch['chain_encoding_all']

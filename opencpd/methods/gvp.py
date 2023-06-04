@@ -36,23 +36,26 @@ class GVP(Base_method):
         recovery = []
         subcat_recovery = {}
 
-        for protein in tqdm(dataset):
-            p_category = protein['category'] if 'category' in protein.keys() else 'Unknown'
-            if p_category not in subcat_recovery.keys():
-                subcat_recovery[p_category] = []
+        with torch.no_grad():
+            for protein in tqdm(dataset):
+                if protein is None:
+                    continue
+                p_category = protein['category'] if 'category' in protein.keys() else 'Unknown'
+                if p_category not in subcat_recovery.keys():
+                    subcat_recovery[p_category] = []
 
-            protein = featurizer.collate([protein])
-            protein = protein.to(self.device)
-            sample = self.model.test_recovery(protein)
-            cmp = sample.eq(protein.seq)
+                protein = featurizer.collate([protein])
+                protein = protein.to(self.device)
+                sample = self.model.test_recovery(protein)
+                cmp = sample.eq(protein.seq)
 
-            # cmp = cmp.view(-1)[score >= self.args.score_thr]
-            recovery_ = cmp.float().mean().cpu().numpy()
+                # cmp = cmp.view(-1)[score >= self.args.score_thr]
+                recovery_ = cmp.float().mean().cpu().numpy()
 
-            if np.isnan(recovery_): recovery_ = 0.0
+                if np.isnan(recovery_): recovery_ = 0.0
 
-            subcat_recovery[p_category].append(recovery_)
-            recovery.append(recovery_)
+                subcat_recovery[p_category].append(recovery_)
+                recovery.append(recovery_)
             
 
         for key in subcat_recovery.keys():
@@ -65,6 +68,28 @@ class GVP(Base_method):
         self.median_recovery = np.median(recovery)
         recovery = np.median(recovery)
         return recovery, subcat_recovery
+    
+    def _save_probs(self, dataset, featurizer):
+        from transformers import AutoTokenizer
+        sv_results = {"title": [],
+                      "true_seq":[],
+                      "pred_probs":[],
+                      "tokenizer":AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")}
+        
+        with torch.no_grad():
+            for protein in tqdm(dataset):
+                if protein is None:
+                    continue
+                name = protein['title']
+                protein = featurizer.collate([protein])
+                protein = protein.to(self.device)
+                sample = self.model.test_recovery(protein)
+                
+                sv_results['title'].append(name)
+                sv_results['true_seq'].append(protein.seq)
+                sv_results['pred_probs'].append(self.model.probs.cpu())
+
+        return sv_results
 
     def train_one_epoch(self, train_loader):
         """ train one epoch to obtain average loss """

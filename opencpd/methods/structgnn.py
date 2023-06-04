@@ -22,6 +22,8 @@ class StructGNN(Base_method):
         recovery = []
         subcat_recovery = {}
         for protein in tqdm(dataset):
+            if protein is None:
+                continue
             p_category = protein['category'] if 'category' in protein.keys() else 'Unknown'
             if p_category not in subcat_recovery.keys():
                 subcat_recovery[p_category] = []
@@ -60,6 +62,39 @@ class StructGNN(Base_method):
         self.median_recovery = np.median(recovery)
         recovery = self.median_recovery
         return recovery, subcat_recovery
+    
+    def _save_probs(self, dataset, featurizer):
+        from transformers import AutoTokenizer
+        sv_results = {"title": [],
+                      "true_seq":[],
+                      "pred_probs":[],
+                      "tokenizer":AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")}
+        
+        for protein in tqdm(dataset):
+            if protein is None:
+                continue
+            name = protein['title']
+            batch = featurizer([protein])
+            if self.args.method == 'GCA':
+                X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
+                X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                
+                h_V, h_P, h_F, P_idx, F_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
+                
+                sample = self.model.sample(h_V, h_P, h_F, P_idx, F_idx, mask, temperature=1.0)
+            else:
+                X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
+                X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                
+                V, E, E_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
+                
+                sample = self.model.sample(V, E, E_idx, mask, temperature=1.0)
+            
+            sv_results['title'].append(name)
+            sv_results['true_seq'].append(S[0].cpu())
+            sv_results['pred_probs'].append(self.model.probs.cpu())
+            
+        return sv_results
     
     def forward_loss(self, batch):
         X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']

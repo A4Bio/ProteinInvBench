@@ -97,6 +97,7 @@ class StructGNN_Model(nn.Module):
         h_S = torch.zeros_like(h_V)
         S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device = self.device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V) for _ in range(len(self.model.decoder_layers))]
+        all_probs = []
         for t in range(N_nodes):
             # Hidden layers
             E_idx_t = E_idx[:,t:t+1,:]
@@ -122,7 +123,11 @@ class StructGNN_Model(nn.Module):
             probs = F.softmax(logits, dim=-1)
             S_t = torch.multinomial(probs, 1).squeeze(-1)
             
+            all_probs.append(probs)
+            
             # Update
             h_S[:,t,:] = self.model.W_s(S_t)
             S[:,t] = S_t
+        
+        self.probs = torch.cat(all_probs, dim=0)
         return S

@@ -102,6 +102,8 @@ def featurize_GTrans(batch):
     # alphabet = 'ACDEFGHIKLMNPQRSTVWYX'
     batch = [one for one in batch if one is not None]
     B = len(batch)
+    if B==0:
+        return None
     lengths = np.array([len(b['seq']) for b in batch], dtype=np.int32)
     L_max = max([len(b['seq']) for b in batch])
     X = np.zeros([B, L_max, 4, 3])
@@ -267,6 +269,8 @@ class featurize_GVP:
     
     def collate(self, batch):
         batch = self.featurize(batch)
+        if (batch is None) or (len(batch)==0):
+            return None
         
         elem = batch[0]
         if isinstance(elem, Data):
@@ -291,8 +295,11 @@ class featurize_GVP:
 
 def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_position_dict=None, omit_AA_dict=None, tied_positions_dict=None, pssm_dict=None, bias_by_res_dict=None):
     """ Pack and pad batch into torch tensors """
+    batch = [one for one in batch if one is not None]
     alphabet = 'ACDEFGHIKLMNPQRSTVWYX'
     B = len(batch)
+    if B==0:
+        return None
     lengths = np.array([len(b['seq']) for b in batch], dtype=np.int32) #sum of chain seq lengths
     L_max = max([len(b['seq']) for b in batch])
     X = np.zeros([B, L_max, 4, 3])

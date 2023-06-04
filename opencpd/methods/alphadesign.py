@@ -106,13 +106,15 @@ class AlphaDesign(Base_method):
         subcat_recovery = {}
         with torch.no_grad():
             for protein in tqdm(dataset):
+                if protein is None:
+                    continue
                 p_category = protein['category'] if 'category' in protein.keys() else 'Unknown'
                 if p_category not in subcat_recovery.keys():
                     subcat_recovery[p_category] = []
 
                 batch = featurizer([protein])
                 X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
-                X, S, score, mask, lengths, chain_encoding = cuda([X, S, score, mask, lengths, chain_encoding])
+                X, S, score, mask, lengths = cuda([X, S, score, mask, lengths])
                 X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
                 log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
                 S_pred = torch.argmax(log_probs, dim=1)
@@ -135,6 +137,30 @@ class AlphaDesign(Base_method):
         self.median_recovery = np.median(recovery)
         recovery = np.median(recovery)
         return recovery, subcat_recovery
+    
+    def _save_probs(self, dataset, featurizer):
+        from transformers import AutoTokenizer
+        sv_results = {"title": [],
+                      "true_seq":[],
+                      "pred_probs":[],
+                      "tokenizer":AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir="/gaozhangyang/model_zoom/transformers")}
+        with torch.no_grad():
+            for protein in tqdm(dataset):
+                if protein is None:
+                    continue
+                
+                name = protein['title']
+                batch = featurizer([protein])
+                X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+                X, S, score, mask, lengths = cuda([X, S, score, mask, lengths])
+                X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
+                log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
+                
+                sv_results['title'].append(name)
+                sv_results['true_seq'].append(S.cpu())
+                sv_results['pred_probs'].append(torch.exp(log_probs).cpu())
+
+        return sv_results
 
     def loss_nll_flatten(self, S, log_probs):
         """ Negative log probabilities """

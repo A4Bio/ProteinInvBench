@@ -76,7 +76,7 @@ class Exp:
         self.method.model.load_state_dict(torch.load(osp.join(self.checkpoints_path, str(epoch) + '.pth')), strict=False)
     
     def train_KWDesign(self):
-        self.args.patience = 3
+        self.args.patience = 5
         self.args.epoch = 5
         recycle_n = self.args.recycle_n
         for cycle in range(1, recycle_n+1):
@@ -144,7 +144,8 @@ def main():
     config = args.__dict__
 
     default_params = load_config(osp.join('./configs', args.method + '.py' if args.config_file is None else args.config_file))
-    config.update(default_params)
+    default_params.update(config)
+    config = default_params
     # args.no_wandb = 1
 
     if not args.no_wandb:
@@ -155,7 +156,7 @@ def main():
     exp = Exp(args)
     
     # best_model_path = osp.join(exp.path, 'checkpoints/19.pth')
-    # exp.method.model.load_state_dict(torch.load(best_model_path))
+    # exp.method.model.load_state_dict(torch.load("/gaozhangyang/experiments/PiFoldV2/results/retrain_PiFold/checkpoint.pth"))
 
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> training <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     if args.method == 'KWDesign':

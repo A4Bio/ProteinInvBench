@@ -234,6 +234,7 @@ class GCA_Model(nn.Module):
         h_S = torch.zeros_like(h_V)
         S = torch.zeros((N_batch, N_nodes), dtype=torch.int64, device=h_V.device)
         h_V_stack = [h_V] + [torch.zeros_like(h_V) for _ in range(len(self.decoder_layers))]
+        all_probs = []
         for t in range(N_nodes):
             # Hidden layers
             P_idx_t = P_idx[:,t:t+1,:]
@@ -257,6 +258,11 @@ class GCA_Model(nn.Module):
             # Update
             h_S[:,t,:] = self.W_s(S_t)
             S[:,t] = S_t
+            
+            all_probs.append(probs)
+        
+        self.probs = torch.cat(all_probs, dim=0)
+        
         t3 = time.time()
         self.encode_t += t2-t1
         self.decode_t += t3-t2

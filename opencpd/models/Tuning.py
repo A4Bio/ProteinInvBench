@@ -63,7 +63,7 @@ class GNNTuning_Model(nn.Module):
         
         self.DesignEmbed = EsmEmbeddings(config)
         self.ESMEmbed = EsmEmbeddings(config)
-        self.EdgeEmbed = nn.Sequential(nn.Linear(416+16, 512),
+        self.EdgeEmbed = nn.Sequential(nn.Linear(416+16+16, 512),
                                      nn.ReLU(),
                                      nn.Linear(512, hidden_dim),
                                      nn.ReLU(),
@@ -107,12 +107,12 @@ class GNNTuning_Model(nn.Module):
                                      nn.Linear(hidden_dim,hidden_dim))
         
         self.ReadOut = nn.Linear(hidden_dim,33)
-        self.TimeEmbed = nn.Embedding(20, hidden_dim)
-        self.ProbEmbed = nn.Sequential(nn.Linear(33, 512),
-                                     nn.ReLU(),
-                                     nn.Linear(512, hidden_dim),
-                                     nn.ReLU(),
-                                     nn.Linear(hidden_dim,hidden_dim))
+        # self.TimeEmbed = nn.Embedding(20, hidden_dim)
+        # self.ProbEmbed = nn.Sequential(nn.Linear(33, 512),
+        #                              nn.ReLU(),
+        #                              nn.Linear(512, hidden_dim),
+        #                              nn.ReLU(),
+        #                              nn.Linear(hidden_dim,hidden_dim))
         
         self.MLP1 = nn.Sequential(nn.Linear(1, 512),
                                      nn.ReLU(),
@@ -131,32 +131,32 @@ class GNNTuning_Model(nn.Module):
         
         
     
-    def embed_gnn(self, pretrain_gnn, mask_select_id, mask_select_feat):
-        gnn_embed = self.DesignEmbed(mask_select_id(pretrain_gnn['pred_ids'])).squeeze()
-        gnn_conf = self.DesignConf(mask_select_id(pretrain_gnn['confs']))
-        gnn_proj = self.DesignProj(mask_select_feat(pretrain_gnn['embeds']))
+    # def embed_gnn(self, pretrain_gnn, mask_select_id, mask_select_feat):
+    #     gnn_embed = self.DesignEmbed(mask_select_id(pretrain_gnn['pred_ids'])).squeeze()
+    #     gnn_conf = self.DesignConf(mask_select_id(pretrain_gnn['confs']))
+    #     gnn_proj = self.DesignProj(mask_select_feat(pretrain_gnn['embeds']))
         
-        if self.args.use_confembed:
-            return gnn_embed*F.sigmoid(gnn_conf)  + gnn_proj 
-        else:
-            return gnn_embed  + gnn_proj 
+    #     if self.args.use_confembed:
+    #         return gnn_embed*F.sigmoid(gnn_conf)  + gnn_proj 
+    #     else:
+    #         return gnn_embed  + gnn_proj 
     
-    def embed_esm(self, pretrain_esm, mask_select_id, mask_select_feat):
-        esm_embed = self.ESMEmbed(mask_select_id(pretrain_esm['pred_ids'])).squeeze()
-        esm_conf = self.ESMConf(mask_select_id(pretrain_esm['confs']))
-        esm_proj = self.ESMProj(mask_select_feat(pretrain_esm['embeds']))
-        if self.args.use_confembed:
-            return esm_embed*F.sigmoid(esm_conf) + esm_proj 
-        else:
-            return esm_embed + esm_proj
+    # def embed_esm(self, pretrain_esm, mask_select_id, mask_select_feat):
+    #     esm_embed = self.ESMEmbed(mask_select_id(pretrain_esm['pred_ids'])).squeeze()
+    #     esm_conf = self.ESMConf(mask_select_id(pretrain_esm['confs']))
+    #     esm_proj = self.ESMProj(mask_select_feat(pretrain_esm['embeds']))
+    #     if self.args.use_confembed:
+    #         return esm_embed*F.sigmoid(esm_conf) + esm_proj 
+    #     else:
+    #         return esm_embed + esm_proj
     
-    def embed_struct(self, pretrain_struct, mask_select_feat):
-        struct_proj = self.StructProj(mask_select_feat(pretrain_struct['embeds']))
-        return struct_proj
+    # def embed_struct(self, pretrain_struct, mask_select_feat):
+    #     struct_proj = self.StructProj(mask_select_feat(pretrain_struct['embeds']))
+    #     return struct_proj
     
-    def embed_esmif(self, pretrain_esmif, mask_select_feat):
-        struct_proj = self.ESMIFProj(mask_select_feat(pretrain_esmif['embeds']))
-        return struct_proj
+    # def embed_esmif(self, pretrain_esmif, mask_select_feat):
+    #     struct_proj = self.ESMIFProj(mask_select_feat(pretrain_esmif['embeds']))
+    #     return struct_proj
     
     def fuse(self, mask_select_feat, mask_select_id, gnn_embed=None, esm_embed=None, gearnet_embed=None, esmif_embed=None, gnn_pred_id=None, esm_pred_id=None, confidence=None, confidence_esm=None):
         gnn, esm, gearnet, esmif, conf = 0, 0, 0, 0, 1.0

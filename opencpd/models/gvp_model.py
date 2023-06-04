@@ -138,8 +138,8 @@ class GVP_Model(nn.Module):
     
             h_V_cache = [(h_V[0].clone(), h_V[1].clone()) for _ in self.decoder_layers]
             
+            all_probs = []
             for i in range(L):
-                
                 h_S_ = h_S[edge_index[0]]
                 h_S_[edge_index[0] >= edge_index[1]] = 0
                 h_E_ = (torch.cat([h_E[0], h_S_], dim=-1), h_E[1])
@@ -163,7 +163,9 @@ class GVP_Model(nn.Module):
                 logits = self.W_out(out)
                 seq[i::L] = Categorical(logits=logits / temperature).sample()
                 h_S[i::L] = self.W_s(seq[i::L])
+                all_probs.append(torch.softmax(logits, dim=-1))
 
+            self.probs = torch.cat(all_probs, dim=0)
             return seq.view(n_samples, L)
     
     def test_recovery(self, protein):

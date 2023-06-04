@@ -122,7 +122,7 @@ class PiFold_Model(nn.Module):
         # self.decoder2 = CNNDecoder2(hidden_dim, hidden_dim, args.num_decoder_layers2, args.kernel_size2, args.act_type, args.glu)
 
         self.decoder = MLPDecoder(hidden_dim, hidden_dim, args.num_decoder_layers1, args.kernel_size1, args.act_type, args.glu, vocab=len(self.tokenizer._token_to_id))
-        self.chain_embed = nn.Embedding(2,16)
+        # self.chain_embed = nn.Embedding(2,16)
         self._init_params()
 
         self.encode_t = 0
@@ -307,7 +307,7 @@ class PiFold_Model(nn.Module):
         _E = torch.cat([_E, pos_embed], dim=-1)
         
         d_chains = ((chain_encoding[dst.long()] - chain_encoding[src.long()])==0).long().reshape(-1)   
-        chain_embed = self.chain_embed(d_chains)
+        chain_embed = self._idx_embeddings(d_chains)
         _E = torch.cat([_E, chain_embed], dim=-1)
 
         # 3D point
@@ -326,6 +326,19 @@ class PiFold_Model(nn.Module):
      
         frequency = torch.exp(
             torch.arange(0, num_embeddings, 2, dtype=torch.float32, device=E_idx.device)
+            * -(np.log(10000.0) / num_embeddings)
+        )
+        angles = d[:,None] * frequency[None,:]
+        E = torch.cat((torch.cos(angles), torch.sin(angles)), -1)
+        return E
+    
+    def _idx_embeddings(self, d, 
+                               num_embeddings=None):
+        # From https://github.com/jingraham/neurips19-graph-protein-design
+        num_embeddings = num_embeddings or self.num_positional_embeddings
+     
+        frequency = torch.exp(
+            torch.arange(0, num_embeddings, 2, dtype=torch.float32, device=d.device)
             * -(np.log(10000.0) / num_embeddings)
         )
         angles = d[:,None] * frequency[None,:]

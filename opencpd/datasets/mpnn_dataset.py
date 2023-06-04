@@ -364,9 +364,6 @@ class MPNNDataset(data.Dataset):
         self.alphabet_set = set([a for a in alphabet])
         self.IDs = list(self.split_dict.keys())
         # self.data = self.preprocess()
-
-        
-
     
     def cache_split(self,):
         train, valid, test = build_training_clusters(self.params, False)
@@ -450,7 +447,7 @@ class MPNNDataset(data.Dataset):
         x_chain_all = np.concatenate(x_chain_list)
         
         data = {
-            "title":entry['name'],
+            "title":entry['name']+str(sel_idx),
             "seq":''.join(chain_seq_list), #len(seq)=n
             "chain_mask":chain_mask_all,
             "chain_encoding":chain_encoding_all,
