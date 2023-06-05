@@ -20,6 +20,8 @@ class AlphaDesign(Base_method):
     
     def forward_loss(self, batch):
         X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
         X, S, score, h_V, h_E, E_idx, batch_id, = self.model._get_features(S, score, X=X, mask=mask)
 
         log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
@@ -153,6 +155,9 @@ class AlphaDesign(Base_method):
                 batch = featurizer([protein])
                 X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
                 X, S, score, mask, lengths = cuda([X, S, score, mask, lengths])
+                if self.args.augment_eps>0:
+                    X = X + self.args.augment_eps * torch.randn_like(X)
+                    
                 X, S, score, h_V, h_E, E_idx, batch_id = self.model._get_features(S, score, X=X, mask=mask)
                 log_probs, log_probs0 = self.model(h_V, h_E, E_idx, batch_id)
                 

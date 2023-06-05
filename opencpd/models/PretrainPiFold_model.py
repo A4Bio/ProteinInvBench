@@ -8,7 +8,10 @@ class PretrainPiFold_Model(PiFold_Model):
     def __init__(self, args, **kwargs):
         """ Graph labeling network """
         PiFold_Model.__init__(self, args)
-        pretrain_pifold_path = osp.join(self.args.res_dir, self.args.data_name, "PiFold", "checkpoint.pth")
+        if args.augment_eps>0:
+            pretrain_pifold_path = osp.join(self.args.res_dir, self.args.data_name, f"PiFold_{args.augment_eps}", "checkpoint.pth")
+        else:
+            pretrain_pifold_path = osp.join(self.args.res_dir, self.args.data_name, "PiFold", "checkpoint.pth")
         self.load_state_dict(torch.load(pretrain_pifold_path))
     
     @torch.no_grad()

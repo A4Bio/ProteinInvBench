@@ -506,7 +506,18 @@ def featurize_ProteinMPNN(batch, is_testing=False, chain_dict=None, fixed_positi
         masked_list_list.append(masked_list)
         masked_chain_length_list_list.append(masked_chain_length_list)
 
+    
+    # mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32) # atom mask
+    # numbers = np.sum(mask, axis=1).astype(np.int)
+    # S_new = np.zeros_like(S)
+    # X_new = np.zeros_like(X)+np.nan
+    # for i, n in enumerate(numbers):
+    #     X_new[i,:n,::] = X[i][mask[i]==1]
+    #     S_new[i,:n] = S[i][mask[i]==1]
 
+    # X = X_new
+    # S = S_new
+    
     isnan = np.isnan(X)
     mask = np.isfinite(np.sum(X,(2,3))).astype(np.float32)
     X[isnan] = 0.

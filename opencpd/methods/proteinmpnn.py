@@ -84,6 +84,8 @@ class ProteinMPNN(StructGNN):
         
             X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = cuda((X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all), device=self.device)
             
+            if self.args.augment_eps>0:
+                X = X + self.args.augment_eps * torch.randn_like(X)
 
             randn_2 = torch.randn(chain_M.shape, device=X.device)
             sample_dict = self.model.sample(X, randn_2, torch.zeros_like(S), chain_M, chain_encoding_all, residue_idx, mask=mask, chain_M_pos=chain_M_pos, temperature=1.0)
@@ -101,6 +103,9 @@ class ProteinMPNN(StructGNN):
         X, S, score, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_M'], batch['chain_M_pos'], batch['residue_idx'], batch['chain_encoding_all']
         
         X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all = cuda((X, S, mask, lengths, chain_M, chain_M_pos, residue_idx, chain_encoding_all), device=self.device)
+        
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
         
         randn_1 = torch.randn(chain_M.shape, device=X.device)
         log_probs = self.model(X, S, mask, chain_M*chain_M_pos, residue_idx, chain_encoding_all, randn_1)

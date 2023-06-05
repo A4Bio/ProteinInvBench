@@ -166,9 +166,6 @@ class PiFold_Model(nn.Module):
         return D_neighbors, E_idx  
 
     def _get_features(self, S, score, X, mask, chain_mask, chain_encoding):
-        if self.augment_eps>0:
-            X = X + self.augment_eps * torch.randn_like(X)
-        
         device = X.device
         mask_bool = (mask==1)
         B, N, _,_ = X.shape

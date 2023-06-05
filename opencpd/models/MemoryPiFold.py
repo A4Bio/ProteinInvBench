@@ -35,7 +35,10 @@ class MemoPiFold_model(nn.Module):
         
         for idx, name in enumerate(batch['title']):
             if (name in self.memory) and use_memory:
-                self.confs[batch_uid[idx],:nums[idx]] = self.memory[name]['conf'].to(device)
+                try:
+                    self.confs[batch_uid[idx],:nums[idx]] = self.memory[name]['conf'].to(device)
+                except:
+                    self.confs[batch_uid[idx],:nums[idx]] = self.memory[name]['conf'].to(device)
                 self.embeds[batch_uid[idx],:nums[idx]] = self.memory[name]['embed'].to(device)
                 self.probs[batch_uid[idx],:nums[idx]] = self.memory[name]['prob'].to(device)
                 self.edge_feats.append((batch_uid[idx], self.memory[name]['h_E'].to(device)))

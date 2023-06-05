@@ -10,20 +10,26 @@ import os.path as osp
 if __name__ == '__main__':
     args = create_parser()
     config = args.__dict__
-    dataset = 'CATH4.3'
-    for eps in [1.0]: # 0.02, 0.2, 0.5, 1.0
-        for method in [ 'GCA']: #'PiFold', 'StructGNN', 'GraphTrans', 'AlphaDesign', 'ProteinMPNN', 'GVP', 'KWDesign',
-            sv_path = f"/gaozhangyang/experiments/OpenCPD/results/{dataset}/{method}_{eps}"
-            # if osp.exists(f"{sv_path}/results.pt"):
+    with open(osp.join('/gaozhangyang/experiments/OpenCPD/data/casp15','casp15.jsonl')) as f:
+        lines = f.readlines()
+    
+    classification = {}
+    for line in lines:
+        entry = json.loads(line)
+        classification[entry['name']] = entry['classification']
+                
+    for dataset in [ 'MPNN']: # CATH4.2', 'CATH4.3',
+        for method in ['PiFold']: #, 'StructGNN', 'GraphTrans', 'AlphaDesign', 'ProteinMPNN', 'GVP', 'GCA', 'KWDesign'
+            sv_path = f"/gaozhangyang/experiments/OpenCPD/results/{dataset}/{method}"
+            # if osp.exists(f"{sv_path}/results_casp15.pt"):
             #     continue
             
             # load config
             params = json.load(open(f"{sv_path}/model_param.json" , 'r'))
             config.update(params)
             
-            # for noisy data
-            config['augment_eps'] = eps
-            config['ex_name'] = f"{args.data_name}/{args.method}_{args.augment_eps}"
+            config['ex_name'] = f"{args.data_name}/{args.method}"
+            config['test_casp'] = True
             
             if method=='KWDesign':
                 config['recycle_n'] = 3
@@ -48,4 +54,9 @@ if __name__ == '__main__':
                 elif method in ['GVP']:
                     results = exp.method._save_probs(exp.test_loader.dataset, featurize_GVP())
             
-            torch.save(results , f"{sv_path}/results.pt")
+            classification_list = []
+            for name in results['title']:
+                classification_list.append(classification[name])
+            results['classification'] = classification_list
+            
+            torch.save(results , f"{sv_path}/results_casp15.pt")

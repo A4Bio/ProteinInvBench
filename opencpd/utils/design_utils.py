@@ -201,11 +201,19 @@ def gather_nodes(nodes, neighbor_idx):
 def _quaternions(R):
     diag = torch.diagonal(R, dim1=-2, dim2=-1)
     Rxx, Ryy, Rzz = diag.unbind(-1)
-    magnitudes = 0.5 * torch.sqrt(torch.abs(1 + torch.stack([
-            Rxx - Ryy - Rzz, 
-        - Rxx + Ryy - Rzz, 
+    # magnitudes = 0.5 * torch.sqrt(torch.abs(1 + torch.stack([
+    #         Rxx - Ryy - Rzz, 
+    #     - Rxx + Ryy - Rzz, 
+    #     - Rxx - Ryy + Rzz
+    # ], -1)))
+    magnitudes = torch.abs(1 + torch.stack([
+        Rxx - Ryy - Rzz,
+        -Rxx + Ryy - Rzz,
         - Rxx - Ryy + Rzz
-    ], -1)))
+        ],-1))
+    magnitudes[magnitudes == 0.0] = 1e-12
+    magnitudes = 0.5 * torch.sqrt(magnitudes)
+    
     _R = lambda i,j: R[:,:,:,i,j]
     signs = torch.sign(torch.stack([
         _R(2,1) - _R(1,2),

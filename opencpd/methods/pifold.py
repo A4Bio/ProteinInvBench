@@ -22,7 +22,9 @@ class PiFold(Base_method):
     
     def forward_loss(self,batch):
         X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
-
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
+            
         X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding= self.model._get_features(S, score, X=X, mask=mask, chain_mask=batch['chain_mask'], chain_encoding = batch['chain_encoding'])
         
         log_probs = self.model(h_V, h_E, E_idx, batch_id)
@@ -180,8 +182,12 @@ class PiFold(Base_method):
                 protein = featurizer([protein])
                 protein = cuda(protein)
                 X, S, mask, score, lengths, chain_mask = protein['X'], protein['S'], protein['mask'], protein['score'], protein['lengths'], protein['chain_mask']
+                
+                if self.args.augment_eps>0:
+                    X = X + self.args.augment_eps * torch.randn_like(X)
 
                 X, S, score, h_V, h_E, E_idx, batch_id, chain_mask, chain_encoding= self.model._get_features(S, score, X=X, mask=mask, chain_mask=chain_mask, chain_encoding = protein['chain_encoding'])
+                
                     
                 log_probs = self.model(h_V, h_E, E_idx, batch_id)
                 

@@ -1,5 +1,6 @@
 import logging
 import sys
+sys.path.append('/gaozhangyang/experiments/OpenCPD')
 import json
 import torch
 import os.path as osp
@@ -13,6 +14,7 @@ import wandb
 from datetime import datetime
 from opencpd.methods import method_maps
 import os
+import copy
 
 
 class Exp:
@@ -91,18 +93,24 @@ class Exp:
     def train(self):
         recorder = Recorder(self.args.patience, verbose=True)
         for epoch in range(self.args.epoch):
+            if self.args.method=='KWDesign':
+                prev_memory_len = len(self.method.model.memo_pifold.memory)
             train_loss, train_perplexity = self.method.train_one_epoch(self.train_loader)
 
-            if epoch % self.args.log_step == 0:
+            if epoch % self.args.log_step==0:
                 with torch.no_grad():
                     valid_loss, valid_perplexity = self.valid()
                     if self.args.method=='KWDesign':
                         self._save(name=f"msa{self.args.msa_n}_recycle{self.args.recycle_n}_epoch{epoch}")
                         if not os.path.exists(self.args.memory_path):
                             torch.save({"memo_pifold":self.method.model.memo_pifold.memory, "memo_esmif":self.method.model.memo_esmif.memory} , self.args.memory_path)
+                        
+                        new_memory_len = len(self.method.model.memo_pifold.memory)
+                        if new_memory_len!=prev_memory_len:
+                            torch.save({"memo_pifold":self.method.model.memo_pifold.memory, "memo_esmif":self.method.model.memo_esmif.memory} , self.args.memory_path)
                     else:
-                        self._save(name=str(epoch))
-                    # self.test()
+                        if epoch > self.args.epoch-10:
+                            self._save(name=str(epoch))
                 
                 print_log('Epoch: {0}, Steps: {1} | Train Loss: {2:.4f} Train Perp: {3:.4f} Valid Loss: {4:.4f} Valid Perp: {5:.4f}\n'.format(epoch + 1, len(self.train_loader), train_loss, train_perplexity, valid_loss, valid_perplexity))
                 
@@ -142,11 +150,15 @@ class Exp:
 def main():
     args = create_parser()
     config = args.__dict__
+    input_params = copy.deepcopy(config)
 
     default_params = load_config(osp.join('./configs', args.method + '.py' if args.config_file is None else args.config_file))
-    default_params.update(config)
-    config = default_params
+    config.update(default_params)
+    # config.update(input_params)
+    # config = default_params
     # args.no_wandb = 1
+    # config['augment_eps'] = input_params['augment_eps']
+    # config['ex_name'] = f"{args.data_name}/{args.method}_{args.augment_eps}"
 
     if not args.no_wandb:
         os.environ["WANDB_API_KEY"] = "ddb1831ecbd2bf95c3323502ae17df6e1df44ec0"

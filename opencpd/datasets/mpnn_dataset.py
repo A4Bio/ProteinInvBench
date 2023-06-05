@@ -372,7 +372,8 @@ class MPNNDataset(data.Dataset):
     
     @classmethod
     def safe_iter(self, ID, split_dict, params, alphabet_set, max_length=1000):
-        sel_idx = np.random.randint(0, len(split_dict[ID]))
+        # sel_idx = np.random.randint(0, len(split_dict[ID]))
+        sel_idx = 0
         out = loader_pdb(split_dict[ID][sel_idx], params)
         entry = get_pdbs(out)
         if entry is None:
@@ -447,7 +448,7 @@ class MPNNDataset(data.Dataset):
         x_chain_all = np.concatenate(x_chain_list)
         
         data = {
-            "title":entry['name']+str(sel_idx),
+            "title":entry['name']+str(int(chain_mask_all.sum())),
             "seq":''.join(chain_seq_list), #len(seq)=n
             "chain_mask":chain_mask_all,
             "chain_encoding":chain_encoding_all,

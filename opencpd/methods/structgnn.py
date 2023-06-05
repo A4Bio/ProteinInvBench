@@ -78,6 +78,8 @@ class StructGNN(Base_method):
             if self.args.method == 'GCA':
                 X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
                 X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                if self.args.augment_eps>0:
+                    X = X + self.args.augment_eps * torch.randn_like(X)
                 
                 h_V, h_P, h_F, P_idx, F_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
                 
@@ -85,6 +87,9 @@ class StructGNN(Base_method):
             else:
                 X, S, score, mask, lengths, chain_mask, chain_encoding = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask'], batch['chain_encoding']
                 X, S, score, mask, lengths, chain_mask, chain_encoding = cuda([X, S, score, mask, lengths, chain_mask, chain_encoding])
+                
+                if self.args.augment_eps>0:
+                    X = X + self.args.augment_eps * torch.randn_like(X)
                 
                 V, E, E_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=chain_mask, chain_encoding = chain_encoding)
                 
@@ -98,6 +103,8 @@ class StructGNN(Base_method):
     
     def forward_loss(self, batch):
         X, S, score, mask, lengths = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths']
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
         if self.args.method=='GCA':
             h_V, h_P, h_F, P_idx, F_idx, chain_mask = self.model._get_features(X, lengths, mask, chain_mask=batch['chain_mask'], chain_encoding = batch['chain_encoding'])
             

@@ -22,12 +22,9 @@ class ESMIF(Base_method):
     def forward_loss(self, batch):
         X, S, score, mask, lengths, chain_mask = batch['X'], batch['S'], batch['score'], batch['mask'], batch['lengths'], batch['chain_mask']
         mask = mask==1
-        # S_prev = 
-        # R = torch.rand(S_prev.shape[0])
-        # for i in range(R.shape[0]):
-        #     mask_pos = (R[i]*mask[i].sum()).long()
-        #     S_prev[i, mask_pos:] = 32
-            # S_prev[i, :] = 32
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
+
             
         B, L = S.shape
         S_prev = torch.cat([torch.zeros(B,1, device=S.device).long(), S[:,:-1]], dim=-1)

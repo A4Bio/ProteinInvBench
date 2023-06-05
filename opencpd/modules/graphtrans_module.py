@@ -550,6 +550,8 @@ class Struct2Seq(nn.Module):
 
     def forward_sequential(self, X, S, L, mask=None):
         """ Compute the transformer layer sequentially, for purposes of debugging """
+        if self.args.augment_eps>0:
+            X = X + self.args.augment_eps * torch.randn_like(X)
         # Prepare node and edge embeddings
         V, E, E_idx = self.features(X, L, mask)
 

@@ -86,7 +86,7 @@ class GVP(Base_method):
                 sample = self.model.test_recovery(protein)
                 
                 sv_results['title'].append(name)
-                sv_results['true_seq'].append(protein.seq)
+                sv_results['true_seq'].append(protein.seq.cpu())
                 sv_results['pred_probs'].append(self.model.probs.cpu())
 
         return sv_results
