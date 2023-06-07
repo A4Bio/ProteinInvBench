@@ -11,8 +11,8 @@ if __name__ == '__main__':
     args = create_parser()
     config = args.__dict__
     dataset = 'CATH4.3'
-    for eps in [1.0]: # 0.02, 0.2, 0.5, 1.0
-        for method in [ 'GCA']: #'PiFold', 'StructGNN', 'GraphTrans', 'AlphaDesign', 'ProteinMPNN', 'GVP', 'KWDesign',
+    for eps in [0.02, 0.2, 0.5, 1.0]: # 
+        for method in [ 'GVP']: #'PiFold', 'StructGNN', 'GraphTrans', 'AlphaDesign', 'ProteinMPNN', 'GVP', 'KWDesign',
             sv_path = f"/gaozhangyang/experiments/OpenCPD/results/{dataset}/{method}_{eps}"
             # if osp.exists(f"{sv_path}/results.pt"):
             #     continue

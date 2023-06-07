@@ -131,3 +131,7 @@ pretrains
 *.json
 run/wandb/
 wandb/
+esm/
+figs/
+esm/*
+sampling/*

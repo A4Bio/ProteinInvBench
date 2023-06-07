@@ -175,6 +175,13 @@ def main():
        exp.train_KWDesign() 
     else:
         exp.train()
+    
+    # total_num_params = sum(p.numel() for p in exp.method.model.parameters())
+    # if total_num_params >= 1e9:
+    #     print(f"模型中的所有权重数量：{total_num_params / 1e9:.2f} GB")
+    # elif total_num_params >= 1e6:
+    #     print(f"模型中的所有权重数量：{total_num_params / 1e6:.2f} MB")
+        
     print('>>>>>>>>>>>>>>>>>>>>>>>>>> testing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
     test_perp, test_rec = exp.test()
     if not args.no_wandb:

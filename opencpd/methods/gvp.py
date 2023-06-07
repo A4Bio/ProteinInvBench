@@ -81,6 +81,12 @@ class GVP(Base_method):
                 if protein is None:
                     continue
                 name = protein['title']
+                protein['CA'] = protein['CA'] + self.args.augment_eps*np.random.rand(*protein['CA'].shape)
+                protein['C'] = protein['C'] + self.args.augment_eps*np.random.rand(*protein['C'].shape)
+                protein['N'] = protein['N'] + self.args.augment_eps*np.random.rand(*protein['N'].shape)
+                protein['O'] = protein['O'] + self.args.augment_eps*np.random.rand(*protein['O'].shape)
+                
+                # protein['X'] = protein['X'] + self.args.augment_eps*torch.rand_like(protein['X'])
                 protein = featurizer.collate([protein])
                 protein = protein.to(self.device)
                 sample = self.model.test_recovery(protein)
