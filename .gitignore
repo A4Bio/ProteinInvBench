@@ -135,3 +135,5 @@ esm/
 figs/
 esm/*
 sampling/*
+model_zoom/*
+run/*
