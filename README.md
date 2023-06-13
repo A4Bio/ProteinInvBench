@@ -1,5 +1,7 @@
 # OpenCPD: Open-source Toolbox for Computaional Protein Design
 
+Model zoom: https://zenodo.org/record/8031783
+
 <p align="left">
 <a href="https://arxiv.org/abs/2209.12643" alt="arXiv">
     <img src="https://img.shields.io/badge/arXiv-2209.12643-b31b1b.svg?style=flat" /></a>
