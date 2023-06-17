@@ -2,8 +2,8 @@
 
 ```
 
-# OpenCPD: Open-source Toolbox for Computaional Protein Design
-Model zoom: https://zenodo.org/record/8031783
+# OpenCPD: Computational Protein Design Tools with Comprehensive Datasets, Models, and Metrics
+
 <p align="left">
 <a href="https://arxiv.org/abs/2211.12509" alt="arXiv">
     <img src="https://img.shields.io/badge/arXiv-2211.12509-b31b1b.svg?style=flat" /></a>
@@ -93,7 +93,9 @@ python setup.py develop
 
 **Obtaining Dataset**
 
-The processed datasets could be found in the [releases]()
+```shell
+bash {method}_GetDataset.sh
+```
 
 **Model Training**
 
@@ -107,7 +109,7 @@ python main.py --method {method}
 
 We support various spatiotemporal prediction methods and will provide benchmarks on various STL datasets. We are working on add new methods and collecting experiment results.
 
-<!-- *The detailed introduction could be found in* [dataset.md]() -->
+*The detailed introduction and download links could be found in* [dataset.md]()
 
 * Spatiotemporal Prediction Methods.
 
@@ -162,7 +164,23 @@ ProteinBench is an open-source project for structure-based protein design method
 
 ## Citation
 
-TBD
+If you are interested in our repository or our paper, please cite the following paper:
+
+```
+@article{tan2022simvp,
+  title={SimVP: Towards Simple yet Powerful Spatiotemporal Predictive Learning},
+  author={Tan, Cheng and Gao, Zhangyang and Li, Siyuan and Li, Stan Z},
+  journal={arXiv preprint arXiv:2211.12509},
+  year={2022}
+}
+
+@misc{li2023openstl,
+  title={OpenSTL: Open-source Toolbox for SpatioTemporal Predictive Learning},
+  author={Li, Siyuan and Tan, Cheng and Gao, Zhangyang and Li, Stan Z},
+  howpublished = {\url{https://github.com/chengtan9907/OpenSTL}},
+  year={2023}
+}
+```
 
 <!-- ```
 @article{tan2023openstl,
