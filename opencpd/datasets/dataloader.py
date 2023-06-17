@@ -105,6 +105,21 @@ def load_data(data_name, method, batch_size, data_root, pdb_path, split_csv, max
         test_set = MPNNDataset(mode='test')
         collate_fn = featurize_GTrans
     
+    elif data_name == 'S350':
+        cath_set = CATHDataset(osp.join(data_root, 's350'), mode='train', test_name='All', removeTS=removeTS, version=4.3)
+        train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
+        valid_set.change_mode('train')
+        test_set.change_mode('train')
+        
+        collate_fn = featurize_GTrans
+        
+    elif data_name == 'Protherm':
+        cath_set = CATHDataset(osp.join(data_root, 'protherm'), mode='train', test_name='All', removeTS=removeTS, version=4.3)
+        train_set, valid_set, test_set = map(lambda x: copy.copy(x), [cath_set] * 3)
+        valid_set.change_mode('valid')
+        test_set.change_mode('test')
+        
+        collate_fn = featurize_GTrans
     if test_casp:
         test_set = CASPDataset(osp.join(data_root, 'casp15'))
 
