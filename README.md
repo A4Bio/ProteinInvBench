@@ -148,9 +148,9 @@ We support various spatiotemporal prediction methods and will provide benchmarks
   To download the processed datasets, please click [here](https://arxiv.org/abs/2010.11929)
   The details of the datasets could be found in [dataset.md]()
 
-  - [X] [CATH](https://arxiv.org/abs/2010.11929)
-  - [X] [PDB](https://arxiv.org/abs/2103.14030)
-  - [X] [CASP15](https://arxiv.org/abs/2105.01601)
+  - [X] CATH
+  - [X] PDB
+  - [X] CASP15
 
   </details>
   <details open>
