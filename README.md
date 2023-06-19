@@ -32,7 +32,7 @@ This repository is an open-source project for benchmarking structure-based prote
 
 ## Introduction
 
-[ProteinBench](https://arxiv.org/abs/2211.12509) is the first comprehensive benchmark for protein design. The main contributions of our paper could be listed as four points below:
+[ProteinBench]() is the first comprehensive benchmark for protein design. The main contributions of our paper could be listed as four points below:
 
 * **Tasks:** We extend recent impressive models from single-chain protein design to the scenarios of multi-chain and de-novoprotein design.
 * **Models:** We integrate recent impressive models into a unified framework for efficiently reproducing and extending them to custom tasks.
