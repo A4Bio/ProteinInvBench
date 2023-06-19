@@ -7,16 +7,16 @@ Model zoom: https://zenodo.org/record/8031783
 <p align="left">
 <a href="https://arxiv.org/abs/2211.12509" alt="arXiv">
     <img src="https://img.shields.io/badge/arXiv-2211.12509-b31b1b.svg?style=flat" /></a>
-<a href="https://github.com/chengtan9907/OpenSTL/blob/master/LICENSE" alt="license">
+<a href="https://github.com/A4Bio/OpenCPD/blob/release/LICENSE" alt="license">
     <img src="https://img.shields.io/badge/license-Apache--2.0-%23002FA7" /></a>
-<a href="https://openstl.readthedocs.io/en/latest/" alt="docs">
-    <img src="https://readthedocs.org/projects/openstl/badge/?version=latest" /></a>
-<a href="https://github.com/chengtan9907/OpenSTL/issues" alt="docs">
-    <img src="https://img.shields.io/github/issues-raw/chengtan9907/SimVPv2?color=%23FF9600" /></a>
-<a href="https://github.com/chengtan9907/OpenSTL/issues" alt="resolution">
+<!-- <a href="https://openstl.readthedocs.io/en/latest/" alt="docs">
+    <img src="https://readthedocs.org/projects/openstl/badge/?version=latest" /></a> -->
+<a href="https://github.com/A4Bio/OpenCPD/issues" alt="docs">
+    <img src="https://img.shields.io/github/issues-raw/A4Bio/OpenCPD?color=%23FF9600" /></a>
+<a href="https://github.com/A4Bio/OpenCPD/issues" alt="resolution">
     <img src="https://img.shields.io/badge/issue%20resolution-1%20d-%23B7A800" /></a>
-<a href="https://img.shields.io/github/stars/chengtan9907/OpenSTL" alt="arXiv">
-    <img src="https://img.shields.io/github/stars/chengtan9907/OpenSTL" /></a>
+<a href="https://img.shields.io/github/stars/A4Bio/OpenCPD/" alt="arXiv">
+    <img src="https://img.shields.io/github/stars/A4Bio/OpenCPD" /></a>
 </p>
 
 [📘Documentation](https://openstl.readthedocs.io/en/latest/) |
@@ -27,7 +27,7 @@ Model zoom: https://zenodo.org/record/8031783
 This repository is an open-source project for benchmarking structure-based protein design methods, which provides a variety of collated datasets, reprouduced methods, novel evaluation metrics, and fine-tuned models that are all intergrated into one unified framework. It also contains the implementation code for the paper:
 
 **ProteinBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics**
-[Zhangyang Gao](https://scholar.google.com/citations?user=4SclT-QAAAAJ&hl=en), [Cheng Tan](https://chengtan9907.github.io/), [Yijie Zhang](https://scholar.google.com/citations?user=Q9Gby5wAAAAJ&hl=en), [Xingran Chen](), [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl).
+[Zhangyang Gao](https://scholar.google.com/citations?user=4SclT-QAAAAJ&hl=en), [Cheng Tan](https://chengtan9907.github.io/), [Yijie Zhang](https://scholar.google.com/citations?user=Q9Gby5wAAAAJ&hl=en), [Xingran Chen](https://www.chenxingran.com/), [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl).
 
 ## Introduction
 
@@ -43,6 +43,10 @@ This repository is an open-source project for benchmarking structure-based prote
 </p>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+<!-- <p align="center">
+    <img width="75%" src=https://github.com/A4Bio/OpenCPD/blob/release/assets/CATH.png> <br>
+</p> -->
 
 ## Overview
 
@@ -70,6 +74,17 @@ This repository is an open-source project for benchmarking structure-based prote
 - `opencpd/modules/` contains network modules and layers.
 - `opencpd/utils/` contains some details in each model.
 - `tools/` contains the executable python files and script files to prepare the dateset and save checkpoints to the model.
+
+</details>
+
+<details open>
+<summary>Demo Results</summary>
+ The result of methods collected on CATH dataset is listed as following:
+<p align="center">
+    <img width="100%" src=https://s1.ax1x.com/2023/06/19/pC1r6ts.png> <br>
+</p>
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 </details>
 
@@ -175,11 +190,11 @@ TBD
 
 ## Contribution and Contact
 
-For adding new features, looking for helps, or reporting bugs associated with `OpenSTL`, please open a [GitHub issue](https://github.com/chengtan9907/OpenSTL/issues) and [pull request](https://github.com/chengtan9907/OpenSTL/pulls) with the tag "new features", "help wanted", or "enhancement". Feel free to contact us through email if you have any questions.
+For adding new features, looking for helps, or reporting bugs associated with `OpenCPD`, please open a [GitHub issue](https://github.com/A4Bio/OpenCPD/issues) and [pull request](https://github.com/A4Bio/OpenCPD/pulls) with the tag "new features", "help wanted", or "enhancement". Feel free to contact us through email if you have any questions.
 
 - Zhangyang Gao (gaozhangyang@westlake.edu.cn), Westlake University & Zhejiang University
 - Cheng Tan (tancheng@westlake.edu.cn), Westlake University & Zhejiang University
 - Yijie Zhang (yj.zhang@mail.mcgill.ca), McGill University
-- Xingran Chen(), University of Michagan
+- Xingran Chen(chenxran@umich.edu), University of Michagan
 
 <p align="right">(<a href="#top">back to top</a>)</p>
