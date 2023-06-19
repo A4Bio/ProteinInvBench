@@ -27,6 +27,7 @@ Model zoom: https://zenodo.org/record/8031783
 This repository is an open-source project for benchmarking structure-based protein design methods, which provides a variety of collated datasets, reprouduced methods, novel evaluation metrics, and fine-tuned models that are all intergrated into one unified framework. It also contains the implementation code for the paper:
 
 **ProteinBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics**
+
 [Zhangyang Gao](https://scholar.google.com/citations?user=4SclT-QAAAAJ&hl=en), [Cheng Tan](https://chengtan9907.github.io/), [Yijie Zhang](https://scholar.google.com/citations?user=Q9Gby5wAAAAJ&hl=en), [Xingran Chen](https://www.chenxingran.com/), [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl).
 
 ## Introduction
