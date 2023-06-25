@@ -177,12 +177,15 @@ This project is released under the [Apache 2.0 license](LICENSE). See `LICENSE` 
 ProteinBench is an open-source project for structure-based protein design methods created by researchers in **CAIRI AI Lab**. We encourage researchers interested in protein design and other related fields to contribute to this project!
 
 ## Citation
+
+```
 @article{gao2023knowledge,
   title={Knowledge-Design: Pushing the Limit of Protein Deign via Knowledge Refinement},
   author={Gao, Zhangyang and Tan, Cheng and Li, Stan Z},
   journal={arXiv preprint arXiv:2305.15151},
   year={2023}
 }
+```
 
 
 ## Contribution and Contact
