@@ -109,7 +109,7 @@ python setup.py develop
 
 **Obtaining Dataset**
 
-The processed datasets could be found in the [releases]()
+The processed datasets could be found in the [releases](https://drive.google.com/drive/folders/1O8pUC25XVdtuweAmvIaanOk8cSuW_a_q?usp=sharing)
 
 **Model Training**
 
@@ -146,7 +146,7 @@ We support various spatiotemporal prediction methods and will provide benchmarks
   <details open>
     <summary>Currently supported datasets</summary>
 
-  To download the processed datasets, please click [here](https://arxiv.org/abs/2010.11929)
+  To download the processed datasets, please click [here](https://drive.google.com/drive/folders/1O8pUC25XVdtuweAmvIaanOk8cSuW_a_q?usp=sharing)
   The details of the datasets could be found in [dataset.md]()
 
   - [X] CATH
