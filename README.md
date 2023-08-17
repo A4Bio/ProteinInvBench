@@ -121,11 +121,11 @@ python main.py --method {method}
 
 ## Overview of Supported Models, Datasets, and Evaluation Metrics
 
-We support various spatiotemporal prediction methods and will provide benchmarks on various STL datasets. We are working on add new methods and collecting experiment results.
+We support various protein design methods and will provide benchmarks on various protein datasets. We are working on add new methods and collecting experiment results.
 
 <!-- *The detailed introduction could be found in* [dataset.md]() -->
 
-* Spatiotemporal Prediction Methods.
+* Protein Design Methods.
 
   <details open>
     <summary>Currently supported methods</summary>
