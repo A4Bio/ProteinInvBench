@@ -55,11 +55,11 @@ This repository is an open-source project for benchmarking structure-based prote
 <summary>Major Features</summary>
 
 - **Unified Code Framework**
-  OpenCPD intergrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, OpenCPD decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own STL algorithms with flexible training strategies and networks for different protein design tasks.
+  OpenCPD integrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, OpenCPD decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own STL algorithms with flexible training strategies and networks for different protein design tasks.
 - **Comprehensive Model Implementation**
-  OpenCPD collects a wide range of recent impressive models together with the datasets and reproduced all the methods in each of the datasets with restricted manners.
+  OpenCPD collects a wide range of recent impressive models together with the datasets and reproduces all the methods in each of the datasets with restricted manners.
 - **Standard Benchmarks**
-  OpenCPD supports standard benchmarks of computational protein design algorithms with various evaluation metrics, including novel ones such as confidence, diversity, and sc-TM. The wide range of evaluataion metrics help to have a more comprehensive understanding for different protein design algorithms.
+  OpenCPD supports standard benchmarks of computational protein design algorithms with various evaluation metrics, including novel ones such as confidence, diversity, and sc-TM. The wide range of evaluataion metrics helps to have a more comprehensive understanding of different protein design algorithms.
 
 </details>
 
@@ -121,7 +121,7 @@ python main.py --method {method}
 
 ## Overview of Supported Models, Datasets, and Evaluation Metrics
 
-We support various protein design methods and will provide benchmarks on various protein datasets. We are working on add new methods and collecting experiment results.
+We support various protein design methods and will provide benchmarks on various protein datasets. We are working on adding new methods and collecting experiment results.
 
 <!-- *The detailed introduction could be found in* [dataset.md]() -->
 
@@ -130,7 +130,7 @@ We support various protein design methods and will provide benchmarks on various
   <details open>
     <summary>Currently supported methods</summary>
 
-  The models and their corresponding results and checkpoints could be downloaded [here](https://zenodo.org/record/8031783)
+  The models and their corresponding results and checkpoints can be downloaded [here](https://zenodo.org/record/8031783)
 
   - [X] [GraphTrans](https://proceedings.neurips.cc/paper/2021/hash/6e67691b60ed3e4a55935261314dd534-Abstract.html) (NeurIPS'2021)
   - [X] [StructGNN](https://arxiv.org/abs/2011.12117) (NeurIPS'2020)
