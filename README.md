@@ -130,7 +130,7 @@ We support various protein design methods and will provide benchmarks on various
   <details open>
     <summary>Currently supported methods</summary>
 
-  The models and their corresponding results and checkpoints could be downloaded [here]( https://zenodo.org/record/8031783)
+  The models and their corresponding results and checkpoints could be downloaded [here](https://zenodo.org/record/8031783)
 
   - [X] [GraphTrans](https://proceedings.neurips.cc/paper/2021/hash/6e67691b60ed3e4a55935261314dd534-Abstract.html) (NeurIPS'2021)
   - [X] [StructGNN](https://arxiv.org/abs/2011.12117) (NeurIPS'2020)
