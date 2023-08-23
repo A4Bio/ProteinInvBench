@@ -180,7 +180,7 @@ ProteinBench is an open-source project for structure-based protein design method
 
 ```
 @article{gao2023knowledge,
-  title={Knowledge-Design: Pushing the Limit of Protein Deign via Knowledge Refinement},
+  title={Knowledge-Design: Pushing the Limit of Protein Design via Knowledge Refinement},
   author={Gao, Zhangyang and Tan, Cheng and Li, Stan Z},
   journal={arXiv preprint arXiv:2305.15151},
   year={2023}
@@ -195,6 +195,6 @@ For adding new features, looking for helps, or reporting bugs associated with `O
 - Zhangyang Gao (gaozhangyang@westlake.edu.cn), Westlake University & Zhejiang University
 - Cheng Tan (tancheng@westlake.edu.cn), Westlake University & Zhejiang University
 - Yijie Zhang (yj.zhang@mail.mcgill.ca), McGill University
-- Xingran Chen(chenxran@umich.edu), University of Michagan
+- Xingran Chen(chenxran@umich.edu), University of Michigan
 
 <p align="right">(<a href="#top">back to top</a>)</p>
