@@ -2,7 +2,7 @@
 
 ```
 
-# OpenCPD: Open-source Toolbox for Computaional Protein Design
+# ProteinInvBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics
 Model zoom: https://zenodo.org/record/8031783
 <p align="left">
 <!-- <a href="https://arxiv.org/abs/2211.12509" alt="arXiv">
@@ -26,13 +26,13 @@ Model zoom: https://zenodo.org/record/8031783
 
 This repository is an open-source project for benchmarking structure-based protein design methods, which provides a variety of collated datasets, reprouduced methods, novel evaluation metrics, and fine-tuned models that are all intergrated into one unified framework. It also contains the implementation code for the paper:
 
-**ProteinBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics**
+**ProteinInvBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics**
 
 [Zhangyang Gao](https://scholar.google.com/citations?user=4SclT-QAAAAJ&hl=en), [Cheng Tan](https://chengtan9907.github.io/), [Yijie Zhang](https://scholar.google.com/citations?user=Q9Gby5wAAAAJ&hl=en), [Xingran Chen](https://www.chenxingran.com/), [Stan Z. Li](https://scholar.google.com/citations?user=Y-nyLGIAAAAJ&hl).
 
 ## Introduction
 
-[ProteinBench]() is the first comprehensive benchmark for protein design. The main contributions of our paper could be listed as four points below:
+[ProteinInvBench]() is the first comprehensive benchmark for protein design. The main contributions of our paper could be listed as four points below:
 
 * **Tasks:** We extend recent impressive models from single-chain protein design to the scenarios of multi-chain and de-novoprotein design.
 * **Models:** We integrate recent impressive models into a unified framework for efficiently reproducing and extending them to custom tasks.
