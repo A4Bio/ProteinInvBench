@@ -55,11 +55,11 @@ This repository is an open-source project for benchmarking structure-based prote
 <summary>Major Features</summary>
 
 - **Unified Code Framework**
-  OpenCPD integrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, OpenCPD decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own STL algorithms with flexible training strategies and networks for different protein design tasks.
+  ProteinInvBench integrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, ProteinInvBench decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own STL algorithms with flexible training strategies and networks for different protein design tasks.
 - **Comprehensive Model Implementation**
-  OpenCPD collects a wide range of recent impressive models together with the datasets and reproduces all the methods in each of the datasets with restricted manners.
+  ProteinInvBench collects a wide range of recent impressive models together with the datasets and reproduces all the methods in each of the datasets with restricted manners.
 - **Standard Benchmarks**
-  OpenCPD supports standard benchmarks of computational protein design algorithms with various evaluation metrics, including novel ones such as confidence, diversity, and sc-TM. The wide range of evaluataion metrics helps to have a more comprehensive understanding of different protein design algorithms.
+  ProteinInvBench supports standard benchmarks of computational protein design algorithms with various evaluation metrics, including novel ones such as confidence, diversity, and sc-TM. The wide range of evaluataion metrics helps to have a more comprehensive understanding of different protein design algorithms.
 
 </details>
 
@@ -91,7 +91,7 @@ This repository is an open-source project for benchmarking structure-based prote
 
 ## News and Updates
 
-[2023-06-16] `OpenCPD` v0.1.0 is released.
+[2023-06-16] `ProteinInvBench` v0.1.0 is released.
 
 ## Installation
 
@@ -174,7 +174,7 @@ This project is released under the [Apache 2.0 license](LICENSE). See `LICENSE` 
 
 ## Acknowledgement
 
-ProteinBench is an open-source project for structure-based protein design methods created by researchers in **CAIRI AI Lab**. We encourage researchers interested in protein design and other related fields to contribute to this project!
+ProteinInvBench is an open-source project for structure-based protein design methods created by researchers in **CAIRI AI Lab**. We encourage researchers interested in protein design and other related fields to contribute to this project!
 
 ## Citation
 
@@ -190,7 +190,7 @@ ProteinBench is an open-source project for structure-based protein design method
 
 ## Contribution and Contact
 
-For adding new features, looking for helps, or reporting bugs associated with `OpenCPD`, please open a [GitHub issue](https://github.com/A4Bio/OpenCPD/issues) and [pull request](https://github.com/A4Bio/OpenCPD/pulls) with the tag "new features", "help wanted", or "enhancement". Feel free to contact us through email if you have any questions.
+For adding new features, looking for helps, or reporting bugs associated with `ProteinInvBench`, please open a [GitHub issue](https://github.com/A4Bio/OpenCPD/issues) and [pull request](https://github.com/A4Bio/OpenCPD/pulls) with the tag "new features", "help wanted", or "enhancement". Feel free to contact us through email if you have any questions.
 
 - Zhangyang Gao (gaozhangyang@westlake.edu.cn), Westlake University & Zhejiang University
 - Cheng Tan (tancheng@westlake.edu.cn), Westlake University & Zhejiang University
