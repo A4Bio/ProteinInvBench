@@ -55,7 +55,7 @@ This repository is an open-source project for benchmarking structure-based prote
 <summary>Major Features</summary>
 
 - **Unified Code Framework**
-  ProteinInvBench integrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, ProteinInvBench decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own STL algorithms with flexible training strategies and networks for different protein design tasks.
+  ProteinInvBench integrates the protein design system pipeline into a unified framework. From data preprocessing to model training, evaluating and result recording, all the methods collected in this paper could be conducted in the same way, which simplifies further analysis to the problem. In detail, ProteinInvBench decomposes computational protein design algorithms into `methods` (training and prediction), `models` (network architectures), and `modules. `Users can develop their own algorithms with flexible training strategies and networks for different protein design tasks.
 - **Comprehensive Model Implementation**
   ProteinInvBench collects a wide range of recent impressive models together with the datasets and reproduces all the methods in each of the datasets with restricted manners.
 - **Standard Benchmarks**
