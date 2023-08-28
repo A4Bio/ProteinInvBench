@@ -109,7 +109,8 @@ python setup.py develop
 
 **Obtaining Dataset**
 
-The processed datasets could be found in the [releases](https://www.idrive.com/idrive/sh/sh?k=p9b2y3l6i5). 
+The processed datasets could be found in the [releases](https://github.com/A4Bio/ProteinInvBench/releases/tag/dataset_release). 
+
 *To note that, due to the large file size, ProteinMPNN dataset was uploaded in a separate file named mpnn.tar.gz, others could be found in data.tar.gz*
 
 **Model Training**
