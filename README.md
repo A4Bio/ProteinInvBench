@@ -24,7 +24,7 @@ Model zoom: https://zenodo.org/record/8031783
 [🚀Model Zoo](docs/en/model_zoos/video_benchmarks.md) |
 [🆕News](docs/en/changelog.md)
 
-This repository is an open-source project for benchmarking structure-based protein design methods, which provides a variety of collated datasets, reprouduced methods, novel evaluation metrics, and fine-tuned models that are all intergrated into one unified framework. It also contains the implementation code for the paper:
+This repository is an open-source project for benchmarking structure-based protein design methods, which provides a variety of collated datasets, reprouduced methods, novel evaluation metrics, and fine-tuned models that are all integrated into one unified framework. It also contains the implementation code for the paper:
 
 **ProteinInvBench: Benchmarking Protein Design on Diverse Tasks, Models, and Metrics**
 
@@ -109,7 +109,8 @@ python setup.py develop
 
 **Obtaining Dataset**
 
-The processed datasets could be found in the [releases](https://drive.google.com/drive/folders/1O8pUC25XVdtuweAmvIaanOk8cSuW_a_q?usp=sharing)
+The processed datasets could be found in the [releases](https://www.idrive.com/idrive/sh/sh?k=p9b2y3l6i5). 
+*To note that, due to the large file size, ProteinMPNN dataset was uploaded in a separate file named mpnn.tar.gz, others could be found in data.tar.gz*
 
 **Model Training**
 
@@ -146,7 +147,7 @@ We support various protein design methods and will provide benchmarks on various
   <details open>
     <summary>Currently supported datasets</summary>
 
-  To download the processed datasets, please click [here](https://drive.google.com/drive/folders/1O8pUC25XVdtuweAmvIaanOk8cSuW_a_q?usp=sharing)
+  To download the processed datasets, please click [here](https://www.idrive.com/idrive/sh/sh?k=p9b2y3l6i5)
   The details of the datasets could be found in [dataset.md]()
 
   - [X] CATH
