@@ -139,7 +139,7 @@ We support various protein design methods and will provide benchmarks on various
   - [X] [GVP](https://arxiv.org/pdf/2303.11783.pdf)
   - [X] [GCA](https://arxiv.org/abs/2204.10673) (ICASSP'2023)
   - [X] [AlphaDesign](https://arxiv.org/abs/2202.01079)
-  - [X] [ProteinMPNN](https://www.science.org/doi/10.1126/science.add2187) (Scienece)
+  - [X] [ProteinMPNN](https://www.science.org/doi/10.1126/science.add2187) (Science)
   - [X] [PiFold](https://arxiv.org/abs/2209.12643) (ICLR'2023)
   - [X] [KWDesign](https://arxiv.org/abs/2305.15151)
 
