@@ -202,3 +202,8 @@ For adding new features, looking for helps, or reporting bugs associated with `P
 - Xingran Chen(chenxran@umich.edu), University of Michigan
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+## TODO
+1. Switch code to torch_lightning framework
+2. Deploy code to public server
+3. Support pip installation
