@@ -2,7 +2,7 @@ import os
 import json
 import numpy as np
 from tqdm import tqdm
-
+import random
 import torch.utils.data as data
 from .utils import cached_property
 from transformers import AutoTokenizer
@@ -110,4 +110,19 @@ class CATHDataset(data.Dataset):
         return self.data[index]
     
     def __getitem__(self, index):
-        return self.data[index]
+        item = self.data[index]
+        L = len(item['seq'])
+        if L>self.max_length:
+            # 计算截断的最大索引
+            max_index = L - self.max_length
+            # 生成随机的截断索引
+            truncate_index = random.randint(0, max_index)
+            # 进行截断
+            item['seq'] = item['seq'][truncate_index:truncate_index+self.max_length]
+            item['CA'] = item['CA'][truncate_index:truncate_index+self.max_length]
+            item['C'] = item['C'][truncate_index:truncate_index+self.max_length]
+            item['O'] = item['O'][truncate_index:truncate_index+self.max_length]
+            item['N'] = item['N'][truncate_index:truncate_index+self.max_length]
+            item['chain_mask'] = item['chain_mask'][truncate_index:truncate_index+self.max_length]
+            item['chain_encoding'] = item['chain_encoding'][truncate_index:truncate_index+self.max_length]
+        return item

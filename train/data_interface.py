@@ -52,7 +52,7 @@ class DInterface(DInterface_base):
     def setup(self, stage=None):
         from src.datasets.featurizer import (featurize_AF, featurize_GTrans, featurize_GVP,
                          featurize_ProteinMPNN, featurize_Inversefolding)
-        if self.hparams.model_name in ['AlphaDesign', 'PiFold', 'KWDesign', 'GraphTrans', 'StructGNN', 'GCA']:
+        if self.hparams.model_name in ['AlphaDesign', 'PiFold', 'KWDesign', 'GraphTrans', 'StructGNN', 'GCA', 'E3PiFold']:
             self.collate_fn = featurize_GTrans
         elif self.hparams.model_name == 'GVP':
             featurizer = featurize_GVP()

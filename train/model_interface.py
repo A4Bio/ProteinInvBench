@@ -38,7 +38,9 @@ class MInterface(MInterface_base):
                 loss += self.cross_entropy(results['log_probs0'], batch['S'])
             loss = (loss*mask).sum()/(mask.sum())
         
-        return loss
+        cmp = log_probs.argmax(dim=-1)==batch['S']
+        recovery = (cmp*mask).sum()/(mask.sum())
+        return loss, recovery
 
 
     def temperature_schedular(self, batch_idx):
@@ -60,15 +62,16 @@ class MInterface(MInterface_base):
     
     #https://lightning.ai/docs/pytorch/1.9.0/notebooks/lightning_examples/basic-gan.html
     def training_step(self, batch, batch_idx, **kwargs):
-        loss = self(batch)
+        loss, recovery = self(batch)
         self.log('loss', loss, on_step=True, on_epoch=True, prog_bar=True)
         return loss
     
 
 
     def validation_step(self, batch, batch_idx):
-        loss = self(batch)
-        self.log_dict({"val_loss":loss})
+        loss, recovery = self(batch)
+        self.log_dict({"val_loss":loss,
+                       "recovery": recovery})
         
         return self.log_dict
 
@@ -96,6 +99,7 @@ class MInterface(MInterface_base):
         
     def load_model(self):
         params = OmegaConf.load(f'./src/models/configs/{self.hparams.model_name}.yaml')
+        params.update(self.hparams)
 
         if self.hparams.model_name == 'GraphTrans':
             from src.models.graphtrans_model import GraphTrans_Model
@@ -131,6 +135,10 @@ class MInterface(MInterface_base):
         if self.hparams.model_name == 'KWDesign':
             from src.models.kwdesign_model import Design_Model
             self.model = Design_Model(params)
+        
+        if self.hparams.model_name == 'E3PiFold':
+            from src.models.E3PiFold_model import E3PiFold
+            self.model = E3PiFold(params)
 
     def instancialize(self, Model, **other_args):
         """ Instancialize a model using the corresponding parameters

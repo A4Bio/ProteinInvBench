@@ -26,16 +26,16 @@ def create_parser():
     parser.add_argument('--check_val_every_n_epoch', default=1, type=int)
     
     
-    parser.add_argument('--dataset', default='CASP15') # AF2DB_dataset, CATH_dataset
-    parser.add_argument('--model_name', default='PiFold', choices=['StructGNN', 'GraphTrans', 'GVP', 'GCA', 'AlphaDesign', 'ESMIF', 'PiFold', 'ProteinMPNN', 'KWDesign'])
+    parser.add_argument('--dataset', default='CATH4.3') # AF2DB_dataset, CATH_dataset
+    parser.add_argument('--model_name', default='E3PiFold', choices=['StructGNN', 'GraphTrans', 'GVP', 'GCA', 'AlphaDesign', 'ESMIF', 'PiFold', 'ProteinMPNN', 'KWDesign', 'E3PiFold'])
     parser.add_argument('--lr', default=4e-4, type=float, help='Learning rate')
     parser.add_argument('--lr_scheduler', default='onecycle')
     parser.add_argument('--offline', default=1, type=int)
     parser.add_argument('--seed', default=111, type=int)
     
     # dataset parameters
-    parser.add_argument('--batch_size', default=8, type=int)
-    parser.add_argument('--num_workers', default=8, type=int)
+    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--num_workers', default=12, type=int)
     parser.add_argument('--pad', default=1024, type=int)
     parser.add_argument('--min_length', default=40, type=int)
     parser.add_argument('--data_root', default='./data/')
@@ -43,6 +43,10 @@ def create_parser():
     # Training parameters
     parser.add_argument('--epoch', default=10, type=int, help='end epoch')
     parser.add_argument('--augment_eps', default=0.0, type=float, help='noise level')
+
+    # Model parameters
+    parser.add_argument('--use_dist', default=1, type=int)
+    parser.add_argument('--use_product', default=0, type=int)
     
     args = parser.parse_args()
     return args
@@ -60,13 +64,13 @@ def load_callbacks(args):
     callbacks.append(BackupCodeCallback(os.path.dirname(args.res_dir),logdir, ignore_patterns=ignore_patterns('results*', 'pdb*', 'metadata*', 'vq_dataset*')))
     
 
-    metric = "val_loss"
-    sv_filename = 'best-{epoch:02d}-{val_loss:.3f}'
+    metric = "recovery"
+    sv_filename = 'best-{epoch:02d}-{recovery:.3f}'
     callbacks.append(plc.ModelCheckpoint(
         monitor=metric,
         filename=sv_filename,
         save_top_k=15,
-        mode='min',
+        mode='max',
         save_last=True,
         dirpath = ckptdir,
         verbose = True,
@@ -113,12 +117,12 @@ if __name__ == "__main__":
         'gpus': -1,  # Use all available GPUs
         'max_epochs': args.epoch,  # Maximum number of epochs to train for
         'num_nodes': 1,  # Number of nodes to use for distributed training
-        "strategy": 'ddp', # 'ddp', 'deepspeed_stage_2
-        "precision": '32', # "bf16", 16
+        "strategy": 'deepspeed_stage_2', # 'ddp', 'deepspeed_stage_2
+        "precision": 'bf16', # "bf16", 16
         'accelerator': 'gpu',  # Use distributed data parallel
         'callbacks': load_callbacks(args),
         'logger': plog.WandbLogger(
-                    project = 'VQProtein',
+                    project = 'E3PiFold',
                     name=args.ex_name,
                     save_dir=str(os.path.join(args.res_dir, args.ex_name)),
                     offline = args.offline,
