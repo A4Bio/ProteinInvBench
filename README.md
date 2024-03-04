@@ -109,7 +109,7 @@ python setup.py develop
 
 **Obtaining Dataset**
 
-The processed datasets could be found in the [releases](https://github.com/A4Bio/ProteinInvBench/releases/tag/dataset_release). 
+The processed datasets could be found in the [releases](https://github.com/A4Bio/ProteinInvBench/releases/tag/dataset_release). Or it can be directly downloaded [here](https://zenodo.org/records/10778307).
 
 *To note that, due to the large file size, ProteinMPNN dataset was uploaded in a separate file named mpnn.tar.gz, others could be found in data.tar.gz*
 
