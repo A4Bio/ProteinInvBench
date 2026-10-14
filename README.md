@@ -141,6 +141,7 @@ We support various protein design methods and will provide benchmarks on various
   - [X] [ProteinMPNN](https://www.science.org/doi/10.1126/science.add2187) (Science)
   - [X] [PiFold](https://arxiv.org/abs/2209.12643) (ICLR'2023)
   - [X] [KWDesign](https://arxiv.org/abs/2305.15151)
+  - [X]  **[ProtInvTree](https://arxiv.org/abs/2506.00925)** (NeurIPS'2025) is available at [GitHub](https://github.com/bilemond/ProtInvTree).
 
   </details>
 
